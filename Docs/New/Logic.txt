@@ -1,0 +1,25 @@
+5) the brand user have option to select from multiple categories and corresponding multiple sub categories (for list refer to "D:\Jitin\PerfEasy\Perfeasy-Product\Research\Cursor\retailverse_V1\retailverse\Docs\New\category-Subcat.txt"), 
+5.a) we will give multi select radio buttons for both categories and corresponding sub categories, 
+
+
+6)Now there are two algos to be implemented 
+i) matching-logic (To calculate the Fit Score corresponding to each retailer): The brand owner who has logged in should see one screen where we show the matched retailers with corresponding fit score (and info based on point ii below), below is the matching logic
+Field	Matching Rule	Logic Description	Weightage	Impacted Score
+Category	Exact Match	If brand category = retailer category → Full Points	30%	Retail Fit Score
+Subcategory	Exact / Gap Match	If subcategory gap > 2 → Full Points; else partial	30%	Assortment Fit Score
+Trade Margin	Range Match	If brand margin >= retailer avg margin → Full Points; else partial	10%	Retail Fit Score
+ASP Match	Range ±15%	If brand ASP within ±15% of retailer ASP → Full Points	30%	Retail Fit Score
+			100%	
+ 
+ii) Based on the FIT score calculated above we also need to show the following infor corresponding to each retailer
+Condition	Priority	Action	Additional Notes
+Fit Score >= 80	High	Recommend Launch in All Stores	Prefer Outright if credit days < 30
+Fit Score 60-79	Medium	Pilot Launch in Select Stores	Prefer SOR if competition high
+Fit Score < 60	Low	Delay Entry	Suggest rework or reprice strategy
+
+7) If user clicks on a Retailer, it will take him to another screen where he can see the retailer details and the fit score etc
+
+
+2) How to calculate ASP for retailer (this will be used in matching logic for retail fit score)
+identify all the common Products present in Brand and Retailer 
+for these products calculate average of ASP  (this ASP value is to be used as Retailer ASP while calculating Retail fit score for that brand)

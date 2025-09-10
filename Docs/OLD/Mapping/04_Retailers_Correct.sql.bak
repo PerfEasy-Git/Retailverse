@@ -1,0 +1,159 @@
+-- Retailers Creation
+-- ===================
+
+-- Retailer: Apna Chemist (RT_0001)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(6, 25, 'Apna Chemist', 'NMT', 'Pharmacy', 'Outright', 7, 30, '/image/Apna Chemist/icon.jpg', NOW(), NOW());
+
+-- Retailer: Apollo (RT_0002)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(7, 26, 'Apollo', 'NMT', 'Pharmacy', 'Outright', 5500, 30, '/image/Apollo/icon.jpg', NOW(), NOW());
+
+-- Retailer: Balaji Grand (RT_0003)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(8, 27, 'Balaji Grand', 'RMT', 'Grocery', 'Outright', 15, 30, '/image/Balaji Grand/icon.jpg', NOW(), NOW());
+
+-- Retailer: Bismi (RT_0004)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(9, 28, 'Bismi', 'RMT', 'Grocery', 'Outright', 18, 30, '/image/Bismi/icon.jpg', NOW(), NOW());
+
+-- Retailer: Centro (RT_0005)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(10, 29, 'Centro', 'NMT', 'Beauty', 'Outright', 32, 30, '/image/Centro/icon.jpg', NOW(), NOW());
+
+-- Retailer: D Mart Ready (RT_0006)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(11, 30, 'D Mart Ready', 'NMT', 'Grocery', 'Outright', 327, 7, '/image/D Mart Ready/icon.jpg', NOW(), NOW());
+
+-- Retailer: Dabur New U (RT_0007)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(12, 31, 'Dabur New U', 'NMT', 'Beauty', 'SOR( Sales or Return)', 100, 45, '/image/Dabur New U/icon.jpg', NOW(), NOW());
+
+-- Retailer: DJT (RT_0008)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(13, 32, 'DJT', 'RMT', 'Grocery', 'Outright', 10, 21, '/image/DJT/icon.jpg', NOW(), NOW());
+
+-- Retailer: Fashion Factory (RT_0009)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(14, 33, 'Fashion Factory', 'NMT', 'Beauty', 'Outright', 107, 30, '/image/Fashion Factory/icon.jpg', NOW(), NOW());
+
+-- Retailer: Gaurdians (RT_0010)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(15, 34, 'Gaurdians', 'NMT', 'Pharmacy', 'Outright', 65, 30, '/image/Gaurdians/icon.jpg', NOW(), NOW());
+
+-- Retailer: Health & Glow (RT_0011)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(16, 35, 'Health & Glow', 'NMT', 'Beauty', 'SOR( Sales or Return)', 180, 45, '/image/HealthandGlow/icon.jpg', NOW(), NOW());
+
+-- Retailer: Kathiyavaar (RT_0012)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(17, 36, 'Kathiyavaar', 'RMT', 'Beauty', 'Outright', 5, 30, '/image/Kathiyavaar/icon.jpg', NOW(), NOW());
+
+-- Retailer: Kolkata Bazaar (RT_0013)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(18, 37, 'Kolkata Bazaar', 'RMT', 'Beauty', 'Outright', 143, 30, '/image/Kolkata Bazaar/icon.jpg', NOW(), NOW());
+
+-- Retailer: Le Marche (RT_0014)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(19, 38, 'Le Marche', 'RMT', 'Grocery', 'SOR( Sales or Return)', 7, 45, '/image/Le Marche/icon.jpg', NOW(), NOW());
+
+-- Retailer: Lifestyle (RT_0015)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(20, 39, 'Lifestyle', 'NMT', 'Beauty', 'SOR( Sales or Return)', 97, 45, '/image/Lifestyle/icon.jpg', NOW(), NOW());
+
+-- Retailer: Lulu Hyper (RT_0016)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(21, 40, 'Lulu Hyper', 'NMT', 'Grocery', 'Outright', 6, 30, '/image/Lulu Hyper/icon.jpg', NOW(), NOW());
+
+-- Retailer: Max Bazaar (RT_0017)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(22, 41, 'Max Bazaar', 'RMT', 'Grocery', 'Outright', 5, 21, '/image/Max Bazaar/icon.jpg', NOW(), NOW());
+
+-- Retailer: Metro C&C (RT_0018)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(23, 42, 'Metro C&C', 'NMT', 'Grocery', 'Outright', 31, 30, '/image/Metro CandC/icon.jpg', NOW(), NOW());
+
+-- Retailer: Modern Bazaar (RT_0019)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(24, 43, 'Modern Bazaar', 'RMT', 'Grocery', 'Outright', 21, 30, '/image/Modern Bazaar/icon.jpg', NOW(), NOW());
+
+-- Retailer: More (RT_0020)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(25, 44, 'More', 'NMT', 'Grocery', 'SOR( Sales or Return)', 913, 30, '/image/More/icon.jpg', NOW(), NOW());
+
+-- Retailer: Nykaa B2B (RT_0021)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(26, 45, 'Nykaa B2B', 'NMT', 'Beauty', 'SOR( Sales or Return)', 15, 45, '/image/Nykaa B2B/icon.jpg', NOW(), NOW());
+
+-- Retailer: Pantaloons (RT_0022)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(27, 46, 'Pantaloons', 'NMT', 'Beauty', 'SOR( Sales or Return)', 394, 30, '/image/Pantaloons/icon.jpg', NOW(), NOW());
+
+-- Retailer: Planet health (RT_0023)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(28, 47, 'Planet health', 'RMT', 'Beauty', 'SOR( Sales or Return)', 38, 30, '/image/Planet health/icon.jpg', NOW(), NOW());
+
+-- Retailer: Potthy's (RT_0024)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(29, 48, 'Potthy's', 'RMT', 'Grocery', 'Outright', 14, 30, '/image/Potthy's/icon.jpg', NOW(), NOW());
+
+-- Retailer: Rajmandir (RT_0025)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(30, 49, 'Rajmandir', 'RMT', 'Grocery', 'Outright', 28, 30, '/image/Rajmandir/icon.jpg', NOW(), NOW());
+
+-- Retailer: Ratandeep (RT_0026)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(31, 50, 'Ratandeep', 'NMT', 'Grocery', 'Outright', 130, 30, '/image/Ratandeep/icon.jpg', NOW(), NOW());
+
+-- Retailer: Reliance Smart (RT_0027)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(32, 51, 'Reliance Smart', 'NMT', 'Grocery', 'Outright', 3930, 30, '/image/Reliance Smart/icon.jpg', NOW(), NOW());
+
+-- Retailer: Shoppers Stop (RT_0028)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(33, 52, 'Shoppers Stop', 'NMT', 'Beauty', 'SOR( Sales or Return)', 166, 30, '/image/Shoppers Stop/icon.jpg', NOW(), NOW());
+
+-- Retailer: Sodhi Super Strores (RT_0029)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(34, 53, 'Sodhi Super Strores', 'RMT', 'Grocery', 'Outright', 8, 30, '/image/Sodhi Super Strores/icon.jpg', NOW(), NOW());
+
+-- Retailer: Spar (RT_0030)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(35, 54, 'Spar', 'NMT', 'Grocery', 'SOR( Sales or Return)', 24, 30, '/image/Spar/icon.jpg', NOW(), NOW());
+
+-- Retailer: Spencers (RT_0031)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(36, 55, 'Spencers', 'NMT', 'Grocery', 'SOR( Sales or Return)', 35, 30, '/image/Spencers/icon.jpg', NOW(), NOW());
+
+-- Retailer: TATA 1MG (RT_0032)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(37, 56, 'TATA 1MG', 'NMT', 'Pharmacy', 'SOR( Sales or Return)', 56, 30, '/image/TATA 1MG/icon.jpg', NOW(), NOW());
+
+-- Retailer: Ushodiya (RT_0033)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(38, 57, 'Ushodiya', 'RMT', 'Grocery', 'Outright', 10, 30, '/image/Ushodiya/icon.jpg', NOW(), NOW());
+
+-- Retailer: Vaibhav stores (RT_0034)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(39, 58, 'Vaibhav stores', 'RMT', 'Beauty', 'Outright', 3, 30, '/image/Vaibhav stores/icon.jpg', NOW(), NOW());
+
+-- Retailer: Vijayetha (RT_0035)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(40, 59, 'Vijayetha', 'NMT', 'Grocery', 'Outright', 100, 30, '/image/Vijayetha/icon.jpg', NOW(), NOW());
+
+-- Retailer: Walmart (RT_0036)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(41, 60, 'Walmart', 'NMT', 'Grocery', 'Outright', 28, 45, '/image/Walmart/icon.jpg', NOW(), NOW());
+
+-- Retailer: Wellness Forever (RT_0037)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(42, 61, 'Wellness Forever', 'NMT', 'Pharmacy', 'Outright', 291, 30, '/image/Wellness Forever/icon.jpg', NOW(), NOW());
+
+-- Retailer: WH Smith (RT_0038)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(43, 62, 'WH Smith', 'NMT', 'Grocery', 'Outright', 34, 30, '/image/WH Smith/icon.jpg', NOW(), NOW());
+
+-- Retailer: Lots (RT_0039)
+INSERT INTO retailers (id, user_id, name, retailer_type, format, buying_model, store_count, avg_credit_days, logo_url, created_at, updated_at) VALUES
+(44, 63, 'Lots', 'RMT', 'Grocery', 'SOR( Sales or Return)', 5, 30, '/image/Lots/icon.jpg', NOW(), NOW());
+

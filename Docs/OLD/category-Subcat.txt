@@ -1,0 +1,30 @@
+category	sub_category
+Makeup	Face
+Makeup	Eyes
+Makeup	Lips
+Makeup	Nail
+Skin	Moisturizers
+Skin	Cleansers
+Skin	Masks
+Skin	Toners
+Skin	Body Care
+Skin	Eye Care
+Skin	Lip Care
+Skin	Sun Care
+Hair	Hair Care
+Bath & Body	Bath & Shower
+Bath & Body	Body Care
+Bath & Body	Shaving & Hair Removal
+Bath & Body	Men's Grooming
+Bath & Body	Hands & Feet
+Bath & Body	Hygiene Essentials
+Bath & Body	Oral Care
+Mom & Baby	Baby Care
+Mom & Baby	Maternity Care
+Mom & Baby	Kids Care
+Mom & Baby	Nursing & Feeding
+Health & Wellness	Health Supplements
+Health & Wellness	Beauty Supplements
+Health & Wellness	Sports Nutrition
+Health & Wellness	Weight Management
+Health & Wellness	Health Foods

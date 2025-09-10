@@ -1,0 +1,29 @@
+{
+  "name": "retailverse",
+  "version": "1.0.0",
+  "description": "RetailVerse Platform - Enterprise-grade Matchmaking Platform for Brands and Retailers",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && npm start",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "setup:db": "cd backend && npm run migrate",
+    "test": "cd backend && npm test"
+  },
+  "keywords": [
+    "retail",
+    "brands",
+    "retailers",
+    "matchmaking",
+    "b2b",
+    "platform"
+  ],
+  "author": "RetailVerse Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+} 

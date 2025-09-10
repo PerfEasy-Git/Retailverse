@@ -1,0 +1,4 @@
+retailer_name,format,type,total_number_of_outlet,city_present,state_present,purchase_model,credit_days
+Apna Chemist,Pharmacy,Pharmacy,7,1,1,Outright,30
+Apollo,Pharmacy,Pharmacy,5500,335,10,Outright,30
+Ayyu Pharmacy,B2B Wholesale,Pharmacy,1,PAN INDIA,PAN INDIA,Outright,45

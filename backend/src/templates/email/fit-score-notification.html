@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIT Score Analysis Complete - RetailVerse</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #7c3aed;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background-color: #f8fafc;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #7c3aed;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+        .score-summary {
+            background-color: #f3f4f6;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .score-high { color: #059669; font-weight: bold; }
+        .score-medium { color: #d97706; font-weight: bold; }
+        .score-low { color: #dc2626; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>FIT Score Analysis Complete</h1>
+    </div>
+    <div class="content">
+        <h2>Hello {{firstName}}!</h2>
+        <p>Your FIT score analysis for {{brandName}} has been completed. Here's a summary of the results:</p>
+        
+        <div class="score-summary">
+            <h3>Analysis Summary</h3>
+            <ul>
+                <li>Total Retailers Analyzed: {{totalRetailers}}</li>
+                <li>High Priority Matches: <span class="score-high">{{highPriority}}</span></li>
+                <li>Medium Priority Matches: <span class="score-medium">{{mediumPriority}}</span></li>
+                <li>Low Priority Matches: <span class="score-low">{{lowPriority}}</span></li>
+            </ul>
+        </div>
+        
+        <p><strong>Top Recommendations:</strong></p>
+        <ul>
+            {{#each topRecommendations}}
+            <li><strong>{{retailerName}}</strong> - {{recommendation}} (Score: {{fitScore}})</li>
+            {{/each}}
+        </ul>
+        
+        <p>View the complete analysis and detailed recommendations in your dashboard:</p>
+        
+        <a href="{{dashboardUrl}}" class="button">View Complete Analysis</a>
+        
+        <p>This analysis was based on your selected categories and current market data. You can recalculate FIT scores anytime with updated data.</p>
+        
+        <p>If you have any questions about these results, please contact our support team.</p>
+        
+        <p>Best regards,<br>The RetailVerse Team</p>
+    </div>
+    <div class="footer">
+        <p>This analysis was generated for {{brandName}} on RetailVerse.</p>
+    </div>
+</body>
+</html>
