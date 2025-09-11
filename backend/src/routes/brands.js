@@ -10,12 +10,31 @@ const router = express.Router();
 // ========================================
 // CREATE BRAND
 // ========================================
-router.post('/',
+router.post('/create',
     requireRole(['brand_admin']),
     [
         body('brand_name').notEmpty().trim(),
-        body('website_url').optional().isURL(),
-        body('contact_number').optional().isMobilePhone(),
+        body('website_url').optional().custom((value) => {
+            if (value && value.trim() !== '') {
+                // Only validate if not empty
+                try {
+                    new URL(value);
+                } catch {
+                    throw new Error('Invalid URL format');
+                }
+            }
+            return true;
+        }),
+        body('contact_number').optional().custom((value) => {
+            if (value && value.trim() !== '') {
+                // Only validate if not empty
+                const mobileRegex = /^[\+]?[1-9][\d]{0,15}$/;
+                if (!mobileRegex.test(value.replace(/\s/g, ''))) {
+                    throw new Error('Invalid mobile phone number format');
+                }
+            }
+            return true;
+        }),
         body('official_email').optional().isEmail(),
         body('designation').optional().trim(),
         body('first_name').optional().trim(),
@@ -82,8 +101,10 @@ router.post('/',
 // ========================================
 // GET BRAND PROFILE
 // ========================================
-router.get('/profile', async (req, res) => {
+router.get('/profile', requireRole(['brand_admin', 'brand_user']), async (req, res) => {
     try {
+        console.log('🔍 Getting brand profile for user:', req.user.id);
+        
         const result = await db.query(`
             SELECT b.*, u.email, u.first_name as user_first_name, u.last_name as user_last_name
             FROM brands b
@@ -91,7 +112,10 @@ router.get('/profile', async (req, res) => {
             WHERE b.user_id = $1
         `, [req.user.id]);
 
+        console.log('📊 Brand profile query result:', result.rows.length, 'rows found');
+
         if (result.rows.length === 0) {
+            console.log('❌ No brand profile found for user:', req.user.id);
             return res.status(404).json({
                 success: false,
                 error: 'Brand profile not found'
@@ -118,12 +142,33 @@ router.put('/profile',
     requireRole(['brand_admin']),
     [
         body('brand_name').optional().trim(),
-        body('website_url').optional().isURL(),
-        body('contact_number').optional().isMobilePhone(),
+        body('website_url').optional().custom((value) => {
+            if (value && value.trim() !== '') {
+                // Only validate if not empty
+                try {
+                    new URL(value);
+                } catch {
+                    throw new Error('Invalid URL format');
+                }
+            }
+            return true;
+        }),
+        body('contact_number').optional().custom((value) => {
+            if (value && value.trim() !== '') {
+                // Only validate if not empty
+                const mobileRegex = /^[\+]?[1-9][\d]{0,15}$/;
+                if (!mobileRegex.test(value.replace(/\s/g, ''))) {
+                    throw new Error('Invalid mobile phone number format');
+                }
+            }
+            return true;
+        }),
         body('official_email').optional().isEmail(),
         body('designation').optional().trim(),
         body('first_name').optional().trim(),
         body('last_name').optional().trim(),
+        body('poc_name').optional().trim(), // Frontend sends poc_name
+        body('trade_margin').optional().trim(), // Frontend sends trade_margin
         body('avg_trade_margin').optional().trim(),
         body('annual_turnover').optional().trim()
     ],
@@ -134,10 +179,17 @@ router.put('/profile',
             const values = [];
             let paramIndex = 1;
 
+            // Map frontend field names to database column names
+            const fieldMapping = {
+                'poc_name': 'first_name', // Map poc_name to first_name
+                'trade_margin': 'avg_trade_margin' // Map trade_margin to avg_trade_margin
+            };
+
             // Build dynamic update query
             Object.keys(req.body).forEach(key => {
                 if (req.body[key] !== undefined) {
-                    updateFields.push(`${key} = $${paramIndex++}`);
+                    const dbColumn = fieldMapping[key] || key;
+                    updateFields.push(`${dbColumn} = $${paramIndex++}`);
                     values.push(req.body[key]);
                 }
             });
@@ -196,12 +248,11 @@ router.put('/profile',
 // ========================================
 // GET BRAND CATEGORIES
 // ========================================
-router.get('/categories', async (req, res) => {
+router.get('/categories', requireRole(['brand_admin', 'brand_user']), async (req, res) => {
     try {
         const result = await db.query(`
-            SELECT bc.*, cs.category, cs.sub_category
+            SELECT bc.*
             FROM brand_categories bc
-            JOIN categories_subcategories cs ON bc.category = cs.category AND bc.sub_category = cs.sub_category
             WHERE bc.brand_id = (SELECT id FROM brands WHERE user_id = $1)
             ORDER BY bc.category, bc.sub_category
         `, [req.user.id]);
@@ -258,13 +309,19 @@ router.post('/categories',
             // Insert new categories
             const insertedCategories = [];
             for (const category of categories) {
-                const result = await db.query(`
-                    INSERT INTO brand_categories (brand_id, category, sub_category)
-                    VALUES ($1, $2, $3)
-                    RETURNING *
-                `, [brandId, category.category, category.sub_category]);
+                // Split comma-separated subcategories
+                const subCategories = category.sub_category.split(',').map(sub => sub.trim()).filter(sub => sub);
                 
-                insertedCategories.push(result.rows[0]);
+                // Insert each subcategory as a separate row
+                for (const subCategory of subCategories) {
+                    const result = await db.query(`
+                        INSERT INTO brand_categories (brand_id, category, sub_category)
+                        VALUES ($1, $2, $3)
+                        RETURNING *
+                    `, [brandId, category.category, subCategory]);
+                    
+                    insertedCategories.push(result.rows[0]);
+                }
             }
 
             // Log category update
@@ -293,6 +350,31 @@ router.post('/categories',
         }
     }
 );
+
+// ========================================
+// GET MY BRANDS (for brand users)
+// ========================================
+router.get('/my-brands', requireRole(['brand_admin', 'brand_user']), async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT b.*, u.email, u.first_name as user_first_name, u.last_name as user_last_name
+            FROM brands b
+            JOIN users u ON b.user_id = u.id
+            WHERE b.user_id = $1
+        `, [req.user.id]);
+
+        res.json({
+            success: true,
+            data: result.rows
+        });
+    } catch (error) {
+        console.error('Get my brands error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get brands'
+        });
+    }
+});
 
 // ========================================
 // GET ALL BRANDS (for admin)

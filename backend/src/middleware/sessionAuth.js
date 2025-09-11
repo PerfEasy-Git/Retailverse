@@ -5,12 +5,17 @@ const SessionService = require('../services/sessionService');
 // ========================================
 const sessionAuth = async (req, res, next) => {
     try {
+        console.log('🔐 SessionAuth middleware called for:', req.path, 'Method:', req.method, 'Timestamp:', new Date().toISOString());
+        console.log('🍪 Cookies:', req.cookies);
+        console.log('📋 Headers:', req.headers.authorization ? 'Authorization header present' : 'No Authorization header');
+        
         // Get session ID from cookie or Authorization header
         let sessionId = null;
         
         // Check cookie first
         if (req.cookies && req.cookies.sessionId) {
             sessionId = req.cookies.sessionId;
+            console.log('✅ Session ID found in cookie:', sessionId);
         }
         
         // Check Authorization header as fallback
@@ -18,10 +23,12 @@ const sessionAuth = async (req, res, next) => {
             const authHeader = req.headers.authorization;
             if (authHeader.startsWith('Bearer ')) {
                 sessionId = authHeader.substring(7);
+                console.log('✅ Session ID found in Authorization header:', sessionId);
             }
         }
         
         if (!sessionId) {
+            console.log('❌ No session ID found - returning 401');
             return res.status(401).json({
                 success: false,
                 error: 'No session found'
@@ -29,9 +36,12 @@ const sessionAuth = async (req, res, next) => {
         }
         
         // Validate session
+        console.log('🔍 Validating session:', sessionId);
         const sessionData = await SessionService.validateSession(sessionId);
+        console.log('📊 Session validation result:', sessionData ? 'Valid' : 'Invalid');
         
         if (!sessionData) {
+            console.log('❌ Session validation failed - returning 401');
             return res.status(401).json({
                 success: false,
                 error: 'Invalid or expired session'
@@ -41,6 +51,7 @@ const sessionAuth = async (req, res, next) => {
         // Add user data to request
         req.user = sessionData.user;
         req.sessionId = sessionData.sessionId;
+        console.log('✅ Session validated - User ID:', sessionData.user?.id, 'Role:', sessionData.user?.role);
         
         next();
         

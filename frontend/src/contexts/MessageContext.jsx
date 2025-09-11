@@ -12,9 +12,12 @@ export const useMessage = () => {
 }
 
 export const MessageProvider = ({ children }) => {
+  console.log('💬 MessageProvider rendering...', new Date().toISOString())
+  
   const [messages, setMessages] = useState([])
 
   const addMessage = (message, type = 'info', persistent = true) => {
+    console.log('💬 Adding message:', message, type, new Date().toISOString())
     const id = Date.now() + Math.random()
     setMessages(prev => [...prev, { id, message, type, persistent }])
     return id

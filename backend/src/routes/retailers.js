@@ -85,7 +85,7 @@ router.post('/',
 // ========================================
 // GET RETAILER PROFILE
 // ========================================
-router.get('/profile', async (req, res) => {
+router.get('/profile', requireRole(['retailer_admin', 'retailer_user']), async (req, res) => {
     try {
         const result = await db.query(`
             SELECT r.*, u.email, u.first_name as user_first_name, u.last_name as user_last_name

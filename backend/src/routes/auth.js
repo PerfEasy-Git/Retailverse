@@ -12,6 +12,10 @@ const AuditService = require('../services/auditService');
 
 const router = express.Router();
 
+// Track request frequency for RCA
+let requestCount = 0;
+let lastRequestTime = Date.now();
+
 // ========================================
 // REGISTER USER
 // ========================================
@@ -19,15 +23,18 @@ router.post('/register',
     [
         body('email').isEmail().normalizeEmail(),
         body('password').isLength({ min: 6 }),
-        body('role').isIn(['brand_admin', 'retailer_admin']),
-        body('first_name').notEmpty().trim(),
-        body('last_name').notEmpty().trim(),
+        body('role').isIn(['brand', 'retailer']),
+        body('firstName').notEmpty().trim(),
+        body('lastName').notEmpty().trim(),
         body('phone').optional().isMobilePhone()
     ],
     validateRequest,
     async (req, res) => {
         try {
-            const { email, password, role, first_name, last_name, phone } = req.body;
+            const { email, password, role, firstName, lastName, phone, companyName } = req.body;
+            
+            // Convert frontend role to backend role
+            const backendRole = role === 'brand' ? 'brand_admin' : 'retailer_admin';
 
             // Check if user already exists
             const existingUser = await db.query(
@@ -50,9 +57,52 @@ router.post('/register',
                 INSERT INTO users (email, password, role, first_name, last_name, phone, is_active, email_verified)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 RETURNING id, email, role, first_name, last_name, company_id, company_type
-            `, [email, hashedPassword, role, first_name, last_name, phone, true, false]);
+            `, [email, hashedPassword, backendRole, firstName, lastName, phone, true, false]);
 
             const user = result.rows[0];
+
+            // Create brand/retailer record for brand/retailer users
+            let companyId = null;
+            if (backendRole === 'brand_admin') {
+                console.log('🏢 Creating brand for user:', user.id, 'with name:', companyName || `${firstName} ${lastName}`);
+                
+                const brandResult = await db.query(`
+                    INSERT INTO brands (user_id, brand_name, first_name, last_name, created_at)
+                    VALUES ($1, $2, $3, $4, NOW())
+                    RETURNING id
+                `, [user.id, companyName || `${firstName} ${lastName}`, firstName, lastName]);
+                
+                companyId = brandResult.rows[0].id;
+                console.log('✅ Brand created with ID:', companyId);
+                
+                // Update user with company_id and company_type
+                await db.query(`
+                    UPDATE users 
+                    SET company_id = $1, company_type = $2
+                    WHERE id = $3
+                `, [companyId, 'brand', user.id]);
+                
+                user.company_id = companyId;
+                user.company_type = 'brand';
+            } else if (backendRole === 'retailer_admin') {
+                const retailerResult = await db.query(`
+                    INSERT INTO retailers (user_id, retailer_name, first_name, last_name, created_at)
+                    VALUES ($1, $2, $3, $4, NOW())
+                    RETURNING id
+                `, [user.id, companyName || `${firstName} ${lastName}`, firstName, lastName]);
+                
+                companyId = retailerResult.rows[0].id;
+                
+                // Update user with company_id and company_type
+                await db.query(`
+                    UPDATE users 
+                    SET company_id = $1, company_type = $2
+                    WHERE id = $3
+                `, [companyId, 'retailer', user.id]);
+                
+                user.company_id = companyId;
+                user.company_type = 'retailer';
+            }
 
             // Create database session
             const session = await SessionService.createSession(user.id, req);
@@ -72,7 +122,7 @@ router.post('/register',
             res.cookie('sessionId', session.session_id, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
+                sameSite: 'lax', // Changed from 'strict' to 'lax' for cross-origin requests
                 maxAge: 24 * 60 * 60 * 1000 // 24 hours
             });
 
@@ -165,7 +215,7 @@ router.post('/login',
             res.cookie('sessionId', session.session_id, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
+                sameSite: 'lax', // Changed from 'strict' to 'lax' for cross-origin requests
                 maxAge: 24 * 60 * 60 * 1000 // 24 hours
             });
 
@@ -420,15 +470,30 @@ router.post('/logout', sessionAuth, async (req, res) => {
 // GET CURRENT USER
 // ========================================
 router.get('/me', sessionAuth, async (req, res) => {
+    const requestId = Math.random().toString(36).substr(2, 9);
+    const timestamp = new Date().toISOString();
+    
     try {
-        res.json({
+        console.log(`🔍 [${requestId}] /auth/me called at ${timestamp}`);
+        console.log(`🔍 [${requestId}] Request headers:`, req.headers);
+        console.log(`🔍 [${requestId}] Request IP:`, req.ip);
+        console.log(`🔍 [${requestId}] User-Agent:`, req.get('User-Agent'));
+        console.log(`🔍 [${requestId}] User ID:`, req.user?.id, 'Role:', req.user?.role);
+        console.log(`🔍 [${requestId}] User object:`, JSON.stringify(req.user, null, 2));
+        
+        const response = {
             success: true,
             data: {
                 user: req.user
             }
-        });
+        };
+        
+        console.log(`📤 [${requestId}] Sending response:`, JSON.stringify(response, null, 2));
+        res.json(response);
+        
+        console.log(`✅ [${requestId}] /auth/me response sent successfully at ${new Date().toISOString()}`);
     } catch (error) {
-        console.error('Get current user error:', error);
+        console.error(`❌ [${requestId}] Get current user error:`, error);
         res.status(500).json({
             success: false,
             error: 'Failed to get user info'

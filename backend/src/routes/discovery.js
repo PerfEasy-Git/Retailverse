@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../database/connection');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { requireRole } = require('../middleware/auth');
+const { sessionAuth } = require('../middleware/sessionAuth');
 
 // ========================================
 // DISCOVERY ENDPOINTS
@@ -10,7 +11,7 @@ const { authenticate, requireRole } = require('../middleware/auth');
 // GET DISCOVERY BRANDS
 // ========================================
 router.get('/brands',
-    authenticate,
+    sessionAuth,
     requireRole(['admin', 'brand_admin', 'brand_user', 'retailer_admin', 'retailer_user']),
     async (req, res) => {
         try {
@@ -70,7 +71,7 @@ router.get('/brands',
 // GET DISCOVERY RETAILERS
 // ========================================
 router.get('/retailers',
-    authenticate,
+    sessionAuth,
     requireRole(['admin', 'brand_admin', 'brand_user', 'retailer_admin', 'retailer_user']),
     async (req, res) => {
         try {
@@ -133,7 +134,7 @@ router.get('/retailers',
 // GET TRENDING DATA
 // ========================================
 router.get('/trending',
-    authenticate,
+    sessionAuth,
     requireRole(['admin', 'brand_admin', 'brand_user', 'retailer_admin', 'retailer_user']),
     async (req, res) => {
         try {

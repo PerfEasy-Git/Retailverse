@@ -11,6 +11,14 @@ const BrandProfile = () => {
   const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
   const [errors, setErrors] = useState({})
+  
+  // Debug errors state changes
+  useEffect(() => {
+    console.log('🔍 Errors state changed:', errors)
+    console.log('🔍 Errors keys:', Object.keys(errors))
+    console.log('🔍 Errors values:', Object.values(errors))
+    console.log('🔍 Has errors with content:', Object.values(errors).some(error => error && error.trim() !== ''))
+  }, [errors])
   const [formData, setFormData] = useState({
     brand_name: '',
     poc_name: '',
@@ -48,7 +56,7 @@ const BrandProfile = () => {
     async () => {
       const response = await api.get('/brands/my-brands');
       console.log('My brands response:', response.data);
-      return response.data.brands || [];
+      return response.data.data || [];
     },
     {
       enabled: !!user,
@@ -61,12 +69,25 @@ const BrandProfile = () => {
     }
   )
 
-  // Get detailed brand profile with categories
+  // Get detailed brand profile
   const { data: brandProfile, isLoading: profileLoading } = useQuery(
     ['brand-profile', user?.id],
     async () => {
-      const response = await api.get('/brands/profile/me');
-      return response.data.brand;
+      const response = await api.get('/brands/profile');
+      return response.data.data;
+    },
+    {
+      enabled: !!user,
+      retry: false
+    }
+  )
+
+  // Get brand categories
+  const { data: brandCategories, isLoading: categoriesLoading } = useQuery(
+    ['brand-categories', user?.id],
+    async () => {
+      const response = await api.get('/brands/categories');
+      return response.data.data;
     },
     {
       enabled: !!user,
@@ -77,29 +98,71 @@ const BrandProfile = () => {
   const [selectedBrand, setSelectedBrand] = useState(null)
 
   const createBrandMutation = useMutation(
-    (data) => api.post('/brands', data),
+    async (data) => {
+      console.log('🚀 Starting brand creation with data:', data)
+      
+      // Create brand profile
+      const profileData = { ...data }
+      delete profileData.categories // Remove categories from profile data
+      
+      console.log('📝 Creating brand profile with:', profileData)
+      const profileResponse = await api.post('/brands/create', profileData)
+      
+      // Add categories if provided
+      if (data.categories && data.categories.length > 0) {
+        console.log('📂 Adding categories with:', data.categories)
+        const categoriesResponse = await api.post('/brands/categories', { categories: data.categories })
+        console.log('✅ Categories added:', categoriesResponse.data)
+      }
+      
+      return profileResponse
+    },
     {
       onSuccess: (newBrand) => {
         queryClient.invalidateQueries(['brands', user?.id])
+        queryClient.invalidateQueries(['brand-profile', user?.id])
+        queryClient.invalidateQueries(['brand-categories', user?.id])
         showSuccess('Brand profile created successfully!')
         setIsEditing(false)
-        setSelectedBrand(newBrand.data.brand.id)
+        setSelectedBrand(newBrand.data.id)
       },
       onError: (error) => {
+        console.error('❌ Brand creation failed:', error)
         showError(error.response?.data?.error || 'Failed to create brand profile')
       }
     }
   )
 
   const updateBrandMutation = useMutation(
-    (data) => api.put(`/brands/${selectedBrand}`, data),
+    async (data) => {
+      console.log('🚀 Starting brand update with data:', data)
+      
+      // Update brand profile
+      const profileData = { ...data }
+      delete profileData.categories // Remove categories from profile data
+      
+      console.log('📝 Updating brand profile with:', profileData)
+      const profileResponse = await api.put('/brands/profile', profileData)
+      
+      // Update categories if provided
+      if (data.categories && data.categories.length > 0) {
+        console.log('📂 Updating categories with:', data.categories)
+        const categoriesResponse = await api.post('/brands/categories', { categories: data.categories })
+        console.log('✅ Categories updated:', categoriesResponse.data)
+      }
+      
+      return profileResponse
+    },
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['brands', user?.id])
+        queryClient.invalidateQueries(['brand-profile', user?.id])
+        queryClient.invalidateQueries(['brand-categories', user?.id])
         showSuccess('Brand profile updated successfully!')
         setIsEditing(false)
       },
       onError: (error) => {
+        console.error('❌ Brand update failed:', error)
         showError(error.response?.data?.error || 'Failed to update brand profile')
       }
     }
@@ -151,6 +214,10 @@ const BrandProfile = () => {
   const validateForm = () => {
     const newErrors = {}
     
+    console.log('🔍 ===== VALIDATION STARTED =====')
+    console.log('🔍 Validating form with data:', formData)
+    console.log('🔍 Current errors state before validation:', errors)
+    
     // Brand Name validation
     if (!formData.brand_name.trim()) {
       newErrors.brand_name = 'Brand name is required'
@@ -194,7 +261,10 @@ const BrandProfile = () => {
         newErrors.trade_margin = 'Trade margin is required'
       }
     
+    console.log('🔍 Validation errors found:', newErrors)
+    console.log('🔍 Validation result (true = passed, false = failed):', Object.keys(newErrors).length === 0)
     setErrors(newErrors)
+    console.log('🔍 ===== VALIDATION COMPLETED =====')
     return Object.keys(newErrors).length === 0
   }
   
@@ -210,10 +280,28 @@ const BrandProfile = () => {
   const handleSubmit = (e) => {
     e.preventDefault()
     
-    if (!validateForm()) {
-      showError('Please fix the errors in the form')
+    console.log('🚀 ===== FORM SUBMISSION STARTED =====')
+    console.log('🚀 Form submitted with data:', formData)
+    console.log('🚀 Selected categories:', selectedCategories)
+    console.log('🚀 Current errors state:', errors)
+    console.log('🚀 isEditing state:', isEditing)
+    console.log('🚀 selectedBrand:', selectedBrand)
+    
+    console.log('🔍 Running validation...')
+    const validationResult = validateForm()
+    console.log('🔍 Validation result:', validationResult)
+    console.log('🔍 Errors after validation:', errors)
+    
+    if (!validationResult) {
+      const errorMessages = Object.values(errors).join(', ')
+      console.log('❌ Validation failed, errors:', errors)
+      console.log('❌ Error messages:', errorMessages)
+      showError(`Validation failed: ${errorMessages}`)
+      console.log('🚀 ===== FORM SUBMISSION STOPPED (VALIDATION FAILED) =====')
       return
     }
+    
+    console.log('✅ Validation passed, proceeding with submission')
     
     // Prepare categories data for submission
     const categoriesData = selectedCategories.map(cat => ({
@@ -445,25 +533,48 @@ const BrandProfile = () => {
               <div className="mt-6">
                 <h4 className="text-md font-semibold text-gray-900 mb-4">Brand Categories & Details</h4>
                 <div className="bg-gray-50 rounded-lg p-4">
-                  {(brandProfile || selectedBrandData)?.categories && (brandProfile || selectedBrandData)?.categories.length > 0 ? (
+                  {brandCategories && brandCategories.length > 0 ? (
                     <div className="space-y-4">
-                      {(brandProfile || selectedBrandData)?.categories.map((cat, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-3">
-                          <div className="flex justify-between items-start mb-2">
-                            <h5 className="font-medium text-gray-900">{cat.category}</h5>
+                      {(() => {
+                        // Group categories by category name
+                        const groupedCategories = brandCategories.reduce((acc, cat) => {
+                          if (!acc[cat.category]) {
+                            acc[cat.category] = {
+                              category: cat.category,
+                              subcategories: [],
+                              avg_trade_margin: cat.avg_trade_margin || 'Not specified',
+                              annual_turnover: cat.annual_turnover || 'Not specified'
+                            };
+                          }
+                          acc[cat.category].subcategories.push(cat.sub_category);
+                          return acc;
+                        }, {});
+
+                        return Object.values(groupedCategories).map((group, index) => (
+                          <div key={index} className="border border-gray-200 rounded-lg p-4">
+                            <div className="flex justify-between items-start mb-3">
+                              <h5 className="font-medium text-gray-900 text-lg">{group.category}</h5>
+                              <div className="text-sm text-gray-600">
+                                <span className="mr-4">Margin: {group.avg_trade_margin}</span>
+                                <span>Turnover: {group.annual_turnover}</span>
+                              </div>
+                            </div>
                             <div className="text-sm text-gray-600">
-                              <span className="mr-4">Margin: {cat.avg_trade_margin}</span>
-                              <span>Turnover: {cat.annual_turnover}</span>
+                              <span className="font-medium">Subcategories:</span>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {group.subcategories.map((subcat, subIndex) => (
+                                  <span 
+                                    key={subIndex} 
+                                    className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
+                                  >
+                                    {subcat}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
                           </div>
-                          {cat.sub_category && (
-                            <div className="text-sm text-gray-700">
-                              <span className="font-medium">Subcategories: </span>
-                              {cat.sub_category.split(',').join(', ')}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        ));
+                      })()}
                     </div>
                   ) : (
                     <p className="text-gray-500 text-sm">No categories configured. Complete your brand profile setup to add categories and subcategories.</p>
@@ -750,13 +861,20 @@ const BrandProfile = () => {
             {/* Submit Button */}
             {isEditing && (
               <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-600">
-                  {Object.keys(errors).length > 0 && (
-                    <span className="text-red-600">
-                      Please fix {Object.keys(errors).length} error(s) before submitting
-                    </span>
-                  )}
-                </div>
+              <div className="text-sm text-gray-600">
+                {Object.values(errors).some(error => error && error.trim() !== '') && (
+                  <div className="text-red-600">
+                    <div className="font-medium mb-1">Please fix the following errors:</div>
+                    <ul className="list-disc list-inside space-y-1">
+                      {Object.entries(errors)
+                        .filter(([field, message]) => message && message.trim() !== '')
+                        .map(([field, message]) => (
+                        <li key={field} className="text-sm">{message}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
                 <div className="flex space-x-3">
                   <button
                     type="button"
@@ -770,7 +888,19 @@ const BrandProfile = () => {
                   </button>
                                      <button
                      type="submit"
-                     disabled={createBrandMutation.isLoading || updateBrandMutation.isLoading || Object.keys(errors).length > 0}
+                     disabled={createBrandMutation.isLoading || updateBrandMutation.isLoading || Object.values(errors).some(error => error && error.trim() !== '')}
+                     onClick={() => {
+                       console.log('🔘 ===== BUTTON CLICKED =====')
+                       console.log('🔘 Update Brand button clicked')
+                       console.log('🔘 Button disabled?', createBrandMutation.isLoading || updateBrandMutation.isLoading || Object.values(errors).some(error => error && error.trim() !== ''))
+                       console.log('🔘 createBrandMutation.isLoading:', createBrandMutation.isLoading)
+                       console.log('🔘 updateBrandMutation.isLoading:', updateBrandMutation.isLoading)
+                       console.log('🔘 Errors count:', Object.keys(errors).length)
+                       console.log('🔘 Errors:', errors)
+                       console.log('🔘 Form data:', formData)
+                       console.log('🔘 Selected categories:', selectedCategories)
+                       console.log('🔘 ===== BUTTON CLICK END =====')
+                     }}
                      className="btn btn-primary flex items-center"
                    >
                      <Save className="h-4 w-4 mr-2" />

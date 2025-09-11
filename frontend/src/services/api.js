@@ -24,7 +24,7 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // Handle 401 errors by redirecting to login
+    // Handle 401 errors - but don't auto-redirect to avoid infinite loops
     if (error.response?.status === 401 && !originalRequest._retry && 
         !originalRequest.url.includes('/auth/login') && 
         !originalRequest.url.includes('/auth/register')) {
@@ -35,8 +35,8 @@ api.interceptors.response.use(
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('sessionId')
 
-      // Redirect to login page
-      window.location.href = '/login'
+      // Don't redirect automatically - let the AuthContext handle it
+      console.log('🔐 API Interceptor: 401 error, clearing tokens but not redirecting')
       return Promise.reject(error)
     }
 

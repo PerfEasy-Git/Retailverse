@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
@@ -11,30 +11,50 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const { login } = useAuth()
+  const { login, user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
-  }
+  // Log component lifecycle (only once)
+  useEffect(() => {
+    console.log('📱 Login component mounted', new Date().toISOString())
+    return () => {
+      console.log('📱 Login component unmounting', new Date().toISOString())
+    }
+  }, [])
 
-  const handleSubmit = async (e) => {
+  // Log user state changes (only when user changes)
+  useEffect(() => {
+    if (user) {
+      console.log('✅ User logged in, should redirect to dashboard')
+    }
+  }, [user])
+
+  // Optimized handleChange with useCallback
+  const handleChange = useCallback((e) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }))
+  }, [])
+
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
+    console.log('🚀 Login form submitted', new Date().toISOString())
+    
     setLoading(true)
+    setError('')
 
     try {
       await login(formData.email, formData.password)
+      console.log('✅ Login successful, should redirect', new Date().toISOString())
       // Login successful - user will be redirected to dashboard
       // Don't clear loading state here as component will unmount
     } catch (error) {
-      console.error('Login error caught in component:', error)
+      console.error('❌ Login error caught in component:', error, new Date().toISOString())
       setLoading(false) // Clear loading state on error
       setError(error.response?.data?.error || 'Login failed. Please check your credentials.')
     }
-  }
+  }, [formData.email, formData.password, login])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { MessageProvider } from './contexts/MessageContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -20,6 +20,9 @@ import DataImport from './pages/DataImport'
 import BrandRegistration from './components/BrandRegistration'
 
 function App() {
+  const location = useLocation()
+  console.log('🌐 App component rendering, current location:', location.pathname, new Date().toISOString())
+  
   return (
     <MessageProvider>
       <AuthProvider>
@@ -49,7 +52,7 @@ function App() {
         } />
         
         <Route path="/brand/profile" element={
-          <ProtectedRoute allowedRoles={['brand']}>
+          <ProtectedRoute allowedRoles={['brand', 'brand_admin', 'brand_user']}>
             <Layout>
               <BrandProfile />
             </Layout>
@@ -73,7 +76,7 @@ function App() {
         } />
         
         <Route path="/fit-analysis" element={
-          <ProtectedRoute allowedRoles={['brand']}>
+          <ProtectedRoute allowedRoles={['brand', 'brand_admin', 'brand_user']}>
             <Layout>
               <FitAnalysis />
             </Layout>
@@ -81,7 +84,7 @@ function App() {
         } />
         
         <Route path="/assortment-planner" element={
-          <ProtectedRoute allowedRoles={['brand']}>
+          <ProtectedRoute allowedRoles={['brand', 'brand_admin', 'brand_user']}>
             <Layout>
               <AssortmentPlanner />
             </Layout>
@@ -89,7 +92,7 @@ function App() {
         } />
         
         <Route path="/product-management" element={
-          <ProtectedRoute allowedRoles={['brand']}>
+          <ProtectedRoute allowedRoles={['brand', 'brand_admin', 'brand_user']}>
             <Layout>
               <ProductManagement />
             </Layout>

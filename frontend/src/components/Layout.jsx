@@ -27,7 +27,7 @@ const Layout = ({ children }) => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Discovery', href: '/discovery', icon: Search },
-    ...(user?.role === 'brand' ? [
+    ...(user?.role === 'brand' || user?.role === 'brand_admin' || user?.role === 'brand_user' ? [
       { name: 'Brand Profile', href: '/brand/profile', icon: Building2 },
       { name: 'Product Management', href: '/product-management', icon: Package2 },
       { name: 'Fit Analysis', href: '/fit-analysis', icon: TrendingUp },

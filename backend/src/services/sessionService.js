@@ -38,6 +38,8 @@ class SessionService {
     // ========================================
     static async validateSession(sessionId) {
         try {
+            console.log('🔍 SessionService.validateSession called with sessionId:', sessionId);
+            
             const result = await db.query(`
                 SELECT 
                     s.*,
@@ -57,7 +59,10 @@ class SessionService {
                 AND u.is_active = true
             `, [sessionId]);
             
+            console.log('📊 Session query result:', result.rows.length, 'rows found');
+            
             if (result.rows.length === 0) {
+                console.log('❌ No valid session found for sessionId:', sessionId);
                 return null;
             }
             
@@ -66,17 +71,21 @@ class SessionService {
             // Update session timestamp
             await this.updateSessionTimestamp(sessionId);
             
+            const userData = {
+                id: session.user_id,
+                email: session.email,
+                first_name: session.first_name,
+                last_name: session.last_name,
+                role: session.role,
+                company_id: session.company_id,
+                company_type: session.company_type
+            };
+            
+            console.log('✅ Session validated successfully - User:', userData);
+            
             return {
                 sessionId: session.session_id,
-                user: {
-                    id: session.user_id,
-                    email: session.email,
-                    first_name: session.first_name,
-                    last_name: session.last_name,
-                    role: session.role,
-                    company_id: session.company_id,
-                    company_type: session.company_type
-                }
+                user: userData
             };
             
         } catch (error) {
