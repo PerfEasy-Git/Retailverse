@@ -1,8 +1,19 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react'
 
 const MessageDisplay = ({ message, type = 'info', onClose, persistent = true }) => {
   if (!message) return null
+
+  // Auto-dismiss non-persistent messages after 5 seconds
+  useEffect(() => {
+    if (!persistent && onClose) {
+      const timer = setTimeout(() => {
+        onClose()
+      }, 5000) // 5 seconds
+
+      return () => clearTimeout(timer)
+    }
+  }, [persistent, onClose])
 
   const getIcon = () => {
     switch (type) {

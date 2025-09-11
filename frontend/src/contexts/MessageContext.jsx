@@ -31,7 +31,7 @@ export const MessageProvider = ({ children }) => {
     setMessages([])
   }
 
-  const showSuccess = (message, persistent = true) => {
+  const showSuccess = (message, persistent = false) => {
     return addMessage(message, 'success', persistent)
   }
 
