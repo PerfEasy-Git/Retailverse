@@ -30,14 +30,31 @@ sudo apt install git -y
 
 ## 🚀 **Step 2: Create Database**
 
+**Note**: This deployment uses the existing PostgreSQL user `intelliscript` with password `Perfeasy1`.
+
 ```bash
 # Switch to postgres user
 sudo su - postgres
 
-# Create database and user
-psql -c "CREATE DATABASE retailverse_prod;"
-psql -c "CREATE USER retailverse_user WITH PASSWORD 'your_password_here';"
-psql -c "GRANT ALL PRIVILEGES ON DATABASE retailverse_prod TO retailverse_user;"
+# Create database
+psql -c "CREATE DATABASE retailverse;"
+
+# Grant privileges to existing user
+psql -c "GRANT ALL PRIVILEGES ON DATABASE retailverse TO intelliscript;"
+psql -c "GRANT ALL PRIVILEGES ON SCHEMA public TO intelliscript;"
+
+# Exit postgres user
+exit
+```
+
+## 🚀 **Step 2.1: Setup Database Schema**
+
+```bash
+# Switch to postgres user
+sudo su - postgres
+
+# Connect to the database and run schema
+psql -d retailverse -f /home/retailverse/app/backend/src/database/001_create_complete_schema.sql
 
 # Exit postgres user
 exit
@@ -78,9 +95,9 @@ NODE_ENV=production
 PORT=1200
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=retailverse_prod
-DB_USER=retailverse_user
-DB_PASSWORD=your_password_here
+DB_NAME=retailverse
+DB_USER=intelliscript
+DB_PASSWORD=Perfeasy1
 SESSION_SECRET=your_secret_key_here
 FRONTEND_URL=http://your-domain.com
 ```

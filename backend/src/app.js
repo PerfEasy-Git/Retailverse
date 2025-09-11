@@ -57,7 +57,9 @@ app.use(cors({
         const allowedOrigins = [
             process.env.FRONTEND_URL || 'http://localhost:1211',
             'http://localhost:1200',
-            'http://localhost:1211'
+            'http://localhost:1211',
+            'https://retailverse.perfeasy.com',
+            'http://retailverse.perfeasy.com'
         ];
         
         if (allowedOrigins.includes(origin)) {
