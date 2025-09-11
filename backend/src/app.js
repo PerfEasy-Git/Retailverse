@@ -127,7 +127,7 @@ app.get('/health', (req, res) => {
         success: true,
         message: 'RetailVerse API is running',
         timestamp: new Date().toISOString(),
-        version: '1.0.0'
+        version: '0.0.3'
     });
 });
 

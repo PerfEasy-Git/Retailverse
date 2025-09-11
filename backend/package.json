@@ -1,6 +1,6 @@
 {
   "name": "retailverse-backend",
-  "version": "1.0.0",
+  "version": "0.0.3",
   "description": "RetailVerse Platform Backend API",
   "main": "server.js",
   "scripts": {

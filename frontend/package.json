@@ -1,6 +1,6 @@
 {
   "name": "retailverse-frontend",
-  "version": "1.0.0",
+  "version": "0.0.3",
   "description": "RetailVerse Platform Frontend",
   "type": "module",
   "scripts": {
