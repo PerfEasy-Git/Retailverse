@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useMessage } from '../contexts/MessageContext'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
@@ -30,15 +30,33 @@ const BrandProfile = () => {
     trade_margin: ''
   })
 
-  // Category and subcategory data
-  const categorySubcategoryMap = {
-    'Makeup': ['Face', 'Eyes', 'Lips', 'Nail'],
-    'Skin': ['Moisturizers', 'Cleansers', 'Masks', 'Toners', 'Body Care', 'Eye Care', 'Lip Care', 'Sun Care'],
-    'Hair': ['Hair Care'],
-    'Bath & Body': ['Bath & Shower', 'Body Care', 'Shaving & Hair Removal', 'Men\'s Grooming', 'Hands & Feet', 'Hygiene Essentials', 'Oral Care'],
-    'Mom & Baby': ['Baby Care', 'Maternity Care', 'Kids Care', 'Nursing & Feeding'],
-    'Health & Wellness': ['Health Supplements', 'Beauty Supplements', 'Sports Nutrition', 'Weight Management', 'Health Foods']
-  };
+  // Fetch categories from database
+  const { data: categoriesData, isLoading: allCategoriesLoading, error: categoriesError } = useQuery(
+    ['categories'],
+    async () => {
+      const response = await api.get('/categories');
+      return response.data.data;
+    },
+    {
+      retry: 2,
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+      cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    }
+  );
+
+  // Convert database categories to the expected format
+  const categorySubcategoryMap = useMemo(() => {
+    if (!categoriesData || !Array.isArray(categoriesData)) {
+      return {};
+    }
+    
+    return categoriesData.reduce((acc, category) => {
+      if (category.category && category.subcategories && Array.isArray(category.subcategories)) {
+        acc[category.category] = category.subcategories;
+      }
+      return acc;
+    }, {});
+  }, [categoriesData]);
 
   const tradeMarginOptions = ['20-25', '25-30', '30 and above'];
   const annualTurnoverOptions = [
@@ -405,10 +423,27 @@ const BrandProfile = () => {
     }));
   };
 
-  if (isLoading) {
+  if (isLoading || allCategoriesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+      </div>
+    )
+  }
+
+  // Handle categories loading error
+  if (categoriesError) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Failed to load categories. Please try again.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="btn btn-primary"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     )
   }
@@ -772,7 +807,8 @@ const BrandProfile = () => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Categories & Subcategories</h3>
                 <p className="text-sm text-gray-600 mb-6">Select categories and their corresponding subcategories. Each category has specific subcategories that will be available for your products.</p>
                 
-                {Object.entries(categorySubcategoryMap).map(([category, subcategories]) => (
+                {Object.keys(categorySubcategoryMap).length > 0 ? (
+                  Object.entries(categorySubcategoryMap).map(([category, subcategories]) => (
                   <div key={category} className="border border-gray-200 rounded-lg p-4 mb-6 hover:border-blue-300 transition-colors">
                     {/* Category Header */}
                     <div className="flex items-center justify-between mb-4">
@@ -854,7 +890,12 @@ const BrandProfile = () => {
                 </div>
               )}
                   </div>
-                ))}
+                ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No categories available. Please contact support.</p>
+                  </div>
+                )}
               </div>
             )}
 

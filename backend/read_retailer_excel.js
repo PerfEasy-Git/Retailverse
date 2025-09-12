@@ -99,3 +99,4 @@ try {
     console.error('❌ Error reading Excel file:', error.message);
     console.error('Full error:', error);
 }
+
