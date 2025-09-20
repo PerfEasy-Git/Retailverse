@@ -2,6 +2,8 @@ const express = require('express');
 const { body } = require('express-validator');
 const multer = require('multer');
 const xlsx = require('xlsx');
+const path = require('path');
+const fs = require('fs');
 const router = express.Router();
 const { db } = require('../database/connection');
 const { requireRole } = require('../middleware/auth');
@@ -9,10 +11,34 @@ const { sessionAuth } = require('../middleware/sessionAuth');
 const { validateRequest } = require('../middleware/validation');
 const { auditLogger } = require('../utils/logger');
 
-// Configure multer for file uploads
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '../../uploads/temp');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('📁 Created uploads directory:', uploadsDir);
+}
+
+// Configure multer for file uploads with better error handling
 const upload = multer({ 
-    dest: 'uploads/temp/',
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+    dest: uploadsDir,
+    limits: { 
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+        files: 1
+    },
+    fileFilter: (req, file, cb) => {
+        // Check file type
+        const allowedTypes = [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+            'application/vnd.ms-excel', // .xls
+            'application/octet-stream' // Sometimes Excel files are detected as this
+        ];
+        
+        if (allowedTypes.includes(file.mimetype) || file.originalname.match(/\.(xlsx|xls)$/)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only Excel files (.xlsx, .xls) are allowed'), false);
+        }
+    }
 });
 
 // ========================================
@@ -326,15 +352,52 @@ router.delete('/products/:id',
 router.post('/upload-excel',
     sessionAuth,
     requireRole(['brand_admin', 'brand_user']),
-    upload.single('excelFile'),
+    (req, res, next) => {
+        // Enhanced error handling for multer
+        upload.single('excelFile')(req, res, (err) => {
+            if (err instanceof multer.MulterError) {
+                console.error('❌ Multer Error:', err);
+                if (err.code === 'LIMIT_FILE_SIZE') {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'File too large. Maximum size is 10MB.'
+                    });
+                }
+                return res.status(400).json({
+                    success: false,
+                    error: 'File upload error: ' + err.message
+                });
+            } else if (err) {
+                console.error('❌ Upload Error:', err);
+                return res.status(400).json({
+                    success: false,
+                    error: err.message
+                });
+            }
+            next();
+        });
+    },
     async (req, res) => {
+        let tempFilePath = null;
+        
         try {
+            console.log('📤 Excel upload started for user:', req.user.id);
+            
             if (!req.file) {
+                console.log('❌ No file uploaded');
                 return res.status(400).json({
                     success: false,
                     error: 'No file uploaded'
                 });
             }
+
+            tempFilePath = req.file.path;
+            console.log('📁 File uploaded to:', tempFilePath);
+            console.log('📊 File details:', {
+                originalname: req.file.originalname,
+                mimetype: req.file.mimetype,
+                size: req.file.size
+            });
 
             // Get user's brand ID
             const brandResult = await db.query(
@@ -343,6 +406,7 @@ router.post('/upload-excel',
             );
 
             if (brandResult.rows.length === 0) {
+                console.log('❌ Brand not found for user:', req.user.id);
                 return res.status(404).json({
                     success: false,
                     error: 'Brand not found'
@@ -350,14 +414,28 @@ router.post('/upload-excel',
             }
 
             const brandId = brandResult.rows[0].id;
+            console.log('✅ Brand ID found:', brandId);
+
+            // Check if file exists and is readable
+            if (!fs.existsSync(tempFilePath)) {
+                console.log('❌ Uploaded file does not exist:', tempFilePath);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Uploaded file not found'
+                });
+            }
 
             // Read Excel file
-            const workbook = xlsx.readFile(req.file.path);
+            console.log('📖 Reading Excel file...');
+            const workbook = xlsx.readFile(tempFilePath);
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const data = xlsx.utils.sheet_to_json(worksheet);
 
+            console.log('📊 Excel data rows:', data.length);
+
             if (data.length === 0) {
+                console.log('❌ Excel file is empty');
                 return res.status(400).json({
                     success: false,
                     error: 'Excel file is empty'
@@ -452,6 +530,18 @@ router.post('/upload-excel',
                 user_agent: req.get('User-Agent')
             });
 
+            // Clean up temp file after successful processing
+            if (tempFilePath && fs.existsSync(tempFilePath)) {
+                try {
+                    fs.unlinkSync(tempFilePath);
+                    console.log('🗑️ Cleaned up temp file after successful upload:', tempFilePath);
+                } catch (cleanupError) {
+                    console.error('❌ Failed to cleanup temp file after success:', cleanupError);
+                }
+            }
+
+            console.log('✅ Excel upload completed successfully:', insertedProducts.length, 'products uploaded');
+
             res.json({
                 success: true,
                 message: `Successfully uploaded ${insertedProducts.length} products`,
@@ -459,10 +549,23 @@ router.post('/upload-excel',
             });
 
         } catch (error) {
-            console.error('Excel upload error:', error);
+            console.error('❌ Excel upload error:', error);
+            console.error('❌ Error stack:', error.stack);
+            
+            // Clean up temp file if it exists
+            if (tempFilePath && fs.existsSync(tempFilePath)) {
+                try {
+                    fs.unlinkSync(tempFilePath);
+                    console.log('🗑️ Cleaned up temp file:', tempFilePath);
+                } catch (cleanupError) {
+                    console.error('❌ Failed to cleanup temp file:', cleanupError);
+                }
+            }
+            
             res.status(500).json({
                 success: false,
-                error: 'Failed to process Excel file'
+                error: 'Failed to process Excel file',
+                details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
             });
         }
     }
