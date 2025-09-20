@@ -4,21 +4,15 @@ class FitScoreService {
     // ========================================
     // CALCULATE FIT SCORE FOR ALL RETAILERS
     // ========================================
-    static async calculateFitScoreForAllRetailers(brandId, selectedCategories) {
+    static async calculateFitScoreForAllRetailers(brandId) {
         try {
             console.log(`🔍 FIT Score Calculation Started for Brand ID: ${brandId}`);
-            console.log(`📊 Selected Categories:`, JSON.stringify(selectedCategories, null, 2));
 
             // Get brand data
             const brandResult = await db.query(`
-                SELECT 
-                    b.*,
-                    STRING_AGG(bc.category, ',') as selected_categories,
-                    STRING_AGG(bc.sub_category, ',') as selected_subcategories
+                SELECT b.*
                 FROM brands b
-                LEFT JOIN brand_categories bc ON b.id = bc.brand_id
                 WHERE b.id = $1
-                GROUP BY b.id
             `, [brandId]);
 
             if (brandResult.rows.length === 0) {
@@ -28,7 +22,35 @@ class FitScoreService {
 
             const brandData = brandResult.rows[0];
             console.log(`✅ Brand found: ${brandData.brand_name}`);
-            console.log(`💰 Brand Trade Margin: ${brandData.avg_trade_margin}`);
+
+            // Get brand products data (aggregated by category+subcategory)
+            const brandProductsResult = await db.query(`
+                SELECT 
+                    category,
+                    sub_category,
+                    AVG(trade_margin) as avg_trade_margin,
+                    AVG(asp) as avg_asp,
+                    SUM(quantity) as total_quantity,
+                    COUNT(*) as product_count
+                FROM brand_products 
+                WHERE brand_id = $1
+                GROUP BY category, sub_category
+            `, [brandId]);
+
+            if (brandProductsResult.rows.length === 0) {
+                console.error(`❌ No products found for Brand ID: ${brandId}`);
+                throw new Error('No products found for brand');
+            }
+
+            // Convert to selectedCategories format for compatibility
+            const selectedCategories = brandProductsResult.rows.map(row => ({
+                category: row.category,
+                sub_categories: [row.sub_category],
+                avg_trade_margin: row.avg_trade_margin.toString(),
+                avg_asp: row.avg_asp.toString()
+            }));
+
+            console.log(`📊 Brand Products:`, JSON.stringify(selectedCategories, null, 2));
 
             // Get all retailers with their product data
             const retailersResult = await db.query(`

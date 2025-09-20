@@ -286,6 +286,162 @@ router.get('/:id/locations', async (req, res) => {
 });
 
 // ========================================
+// GET RETAILER DETAILS FOR DISCOVERY PAGE
+// ========================================
+router.get('/:id/details', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Get retailer basic info
+        const retailerResult = await db.query(`
+            SELECT 
+                r.id,
+                r.retailer_name,
+                r.retailer_category,
+                r.retailer_format,
+                r.retailer_sale_model,
+                r.outlet_count,
+                r.city_count,
+                r.state_count,
+                r.purchase_model,
+                r.credit_days,
+                r.logo_url,
+                r.store_images,
+                u.first_name,
+                u.last_name,
+                u.email
+            FROM retailers r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.id = $1
+        `, [id]);
+
+        if (retailerResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Retailer not found'
+            });
+        }
+
+        const retailer = retailerResult.rows[0];
+
+        // Get FIT score by calculating it on-the-fly (same logic as Discovery page)
+        let fitScore = 0;
+        let categorySize = 0;
+        let categoryPercentage = 0;
+        
+        try {
+            // Import the FitScoreService to calculate FIT score
+            const FitScoreService = require('../services/fitScoreService');
+            
+            // Get the brand ID for the current user (assuming brand user is viewing retailer details)
+            const brandResult = await db.query(
+                'SELECT id FROM brands WHERE user_id = $1',
+                [req.user.id]
+            );
+            
+            if (brandResult.rows.length > 0) {
+                const brandId = brandResult.rows[0].id;
+                const fitScoreResult = await FitScoreService.calculateFitScoreForAllRetailers(brandId);
+                
+                // Find the FIT score for this specific retailer
+                const retailerFitScore = fitScoreResult.retailers.find(r => r.retailer_id == id);
+                if (retailerFitScore) {
+                    fitScore = retailerFitScore.fit_score;
+                }
+            }
+            
+            // Calculate real market size and category percentage
+            const marketSizeResult = await db.query(`
+                SELECT 
+                    SUM(rpm.annual_sale * rpm.avg_selling_price) as total_market_size,
+                    COUNT(DISTINCT p.category) as category_count
+                FROM retailer_product_mappings rpm
+                JOIN products p ON rpm.product_id = p.id
+                WHERE rpm.retailer_id = $1
+            `, [id]);
+            
+            if (marketSizeResult.rows.length > 0 && marketSizeResult.rows[0].total_market_size) {
+                // Convert to crores (divide by 10,000,000)
+                categorySize = (marketSizeResult.rows[0].total_market_size / 10000000).toFixed(1);
+                
+                // Calculate category percentage (simplified - could be enhanced with industry data)
+                // For now, using a formula based on store count and market presence
+                const storeCount = retailer.outlet_count || 0;
+                const stateCount = retailer.state_count || 0;
+                categoryPercentage = Math.min(Math.round((storeCount * stateCount) / 10), 100);
+            }
+            
+        } catch (error) {
+            console.log('Could not calculate FIT score or market data:', error.message);
+            fitScore = 0; // Default to 0 if calculation fails
+            categorySize = 0;
+            categoryPercentage = 0;
+        }
+
+        // Get category and brand share data (mock for now - will be replaced with real data)
+        const subCategoryShare = [
+            { name: "SHAVING FOAM", percentage: 38, color: "#7C3AED" },
+            { name: "RAZOR", percentage: 22, color: "#A855F7" },
+            { name: "SHAVING CREAM", percentage: 40, color: "#9333EA" }
+        ];
+
+        const brandShare = [
+            { name: "GILLETTE", percentage: 58.4, color: "#F97316" },
+            { name: "BOMBAY SHAVING", percentage: 8.8, color: "#FB923C" },
+            { name: "VIJOHN", percentage: 11, color: "#FBBF24" },
+            { name: "DENIM", percentage: 11, color: "#D97706" },
+            { name: "432 LASER", percentage: 6.6, color: "#F59E0B" },
+            { name: "OTHERS", percentage: 3.2, color: "#92400E" }
+        ];
+
+        // Parse store images if available
+        let inStoreImages = [];
+        if (retailer.store_images) {
+            try {
+                inStoreImages = JSON.parse(retailer.store_images);
+            } catch (e) {
+                // If parsing fails, use default placeholder
+                inStoreImages = ["/api/placeholder/300/200", "/api/placeholder/300/200", "/api/placeholder/300/200", "/api/placeholder/300/200"];
+            }
+        } else {
+            inStoreImages = ["/api/placeholder/300/200", "/api/placeholder/300/200", "/api/placeholder/300/200", "/api/placeholder/300/200"];
+        }
+
+        res.json({
+            success: true,
+            data: {
+                id: retailer.id,
+                name: retailer.retailer_name,
+                logo: retailer.logo_url || "/api/placeholder/60/60",
+                chainType: retailer.retailer_format || "NMT",
+                storeCount: retailer.outlet_count || 0,
+                businessModel: retailer.retailer_sale_model || "B2C",
+                format: retailer.retailer_format || "GROCERY",
+                paymentTerm: retailer.purchase_model || "OUTRIGHT",
+                paymentTime: retailer.credit_days ? `${retailer.credit_days} DAYS` : "21 DAYS",
+                statePresence: retailer.state_count || 0,
+                cityPresence: retailer.city_count || 0,
+                contactPerson: `${retailer.first_name || ''} ${retailer.last_name || ''}`.trim() || "Contact Person",
+                email: retailer.email,
+                matchScore: fitScore,
+                categorySize: `${categorySize}Cr`,
+                categoryPercentage: categoryPercentage,
+                subCategoryShare,
+                brandShare,
+                inStoreImages
+            }
+        });
+
+    } catch (error) {
+        console.error('Get retailer details error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get retailer details'
+        });
+    }
+});
+
+// ========================================
 // GET RETAILER ANALYTICS
 // ========================================
 router.get('/:id/analytics', async (req, res) => {

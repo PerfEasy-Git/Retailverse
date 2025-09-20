@@ -9,23 +9,15 @@ const { auditLogger } = require('../utils/logger');
 const router = express.Router();
 
 // ========================================
-// CALCULATE FIT SCORE FOR SELECTED CATEGORIES
+// CALCULATE FIT SCORE FOR BRAND PRODUCTS
 // ========================================
 router.post('/calculate',
     requireRole(['brand_admin', 'brand_user']),
-    [
-        body('selected_categories').isArray({ min: 1 }),
-        body('selected_categories.*.category').notEmpty().trim(),
-        body('selected_categories.*.sub_categories').isArray({ min: 1 })
-    ],
-    validateRequest,
     async (req, res) => {
         try {
-            const { selected_categories } = req.body;
             const userId = req.user.id;
 
             console.log(`🚀 FIT Score API Call - User ID: ${userId}`);
-            console.log(`📋 Selected Categories:`, JSON.stringify(selected_categories, null, 2));
 
             // Get brand ID
             const brandResult = await db.query(
@@ -44,8 +36,8 @@ router.post('/calculate',
             const brandId = brandResult.rows[0].id;
             console.log(`✅ Brand ID found: ${brandId}`);
 
-            // Calculate FIT scores for all retailers
-            const result = await FitScoreService.calculateFitScoreForAllRetailers(brandId, selected_categories);
+            // Calculate FIT scores for all retailers using brand products
+            const result = await FitScoreService.calculateFitScoreForAllRetailers(brandId);
 
             // Log FIT score calculation
             await auditLogger.log({
@@ -53,7 +45,7 @@ router.post('/calculate',
                 action: 'fit_score_calculated',
                 resource_type: 'fit_score',
                 resource_id: brandId,
-                new_values: { selected_categories, result_count: result.retailers.length },
+                new_values: { result_count: result.retailers.length },
                 ip_address: req.ip,
                 user_agent: req.get('User-Agent')
             });

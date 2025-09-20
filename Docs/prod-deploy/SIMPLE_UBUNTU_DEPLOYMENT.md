@@ -1,4 +1,5 @@
 
+
 cd /home/retailverse/app
 git pull origin main
 

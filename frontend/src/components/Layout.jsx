@@ -26,17 +26,18 @@ const Layout = ({ children }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Discovery', href: '/discovery', icon: Search },
     ...(user?.role === 'brand' || user?.role === 'brand_admin' || user?.role === 'brand_user' ? [
-      { name: 'Brand Profile', href: '/brand/profile', icon: Building2 },
+      { name: 'Discovery', href: '/discovery', icon: Search },
       { name: 'Product Management', href: '/product-management', icon: Package2 },
       { name: 'Fit Analysis', href: '/fit-analysis', icon: TrendingUp },
       { name: 'Assortment Planner', href: '/assortment-planner', icon: Package }
     ] : []),
     ...(user?.role === 'retailer' ? [
+      { name: 'Discovery', href: '/discovery', icon: Search },
       { name: 'Retailer Profile', href: '/retailer/profile', icon: Store }
     ] : []),
     ...(user?.role === 'admin' ? [
+      { name: 'Discovery', href: '/discovery', icon: Search },
       { name: 'Admin', href: '/admin', icon: BarChart3 },
       { name: 'Data Import', href: '/admin/data-import', icon: Upload }
     ] : []),

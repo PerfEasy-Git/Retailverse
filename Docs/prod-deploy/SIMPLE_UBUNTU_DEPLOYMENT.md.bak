@@ -1,3 +1,19 @@
+
+cd /home/retailverse/app
+git pull origin main
+
+pm2 stop retailverse
+
+cd backend && npm install && cd ..
+cd frontend && npm install && cd ..
+
+cd frontend && npm run build && cd ..
+
+pm2 start backend/server.js --name "retailverse"
+pm2 save
+
+curl https://retailverse.perfeasy.com/api/health
+
 # Simple Ubuntu Deployment Guide
 
 ## 🎯 **What You Need**

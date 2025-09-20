@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard'
 import BrandProfile from './pages/BrandProfile'
 import RetailerProfile from './pages/RetailerProfile'
 import Discovery from './pages/Discovery'
+import RetailerDetails from './pages/RetailerDetails'
 import FitAnalysis from './pages/FitAnalysis'
 import AssortmentPlanner from './pages/AssortmentPlanner'
 import ProductManagement from './pages/ProductManagement'
@@ -71,6 +72,14 @@ function App() {
           <ProtectedRoute>
             <Layout>
               <Discovery />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/retailer/:retailerId" element={
+          <ProtectedRoute>
+            <Layout>
+              <RetailerDetails />
             </Layout>
           </ProtectedRoute>
         } />

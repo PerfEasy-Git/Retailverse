@@ -144,6 +144,19 @@ app.use('/api/admin', sessionAuth, adminRoutes);
 app.use('/api/discovery', sessionAuth, discoveryRoutes);
 app.use('/api/categories', categoriesRoutes);
 
+// Template download routes
+app.get('/api/templates/brand-template.xlsx', (req, res) => {
+    const path = require('path');
+    const filePath = path.join(__dirname, '../templates/BRAND_TEMPLATE.xlsx');
+    res.download(filePath, 'BRAND_TEMPLATE.xlsx');
+});
+
+app.get('/api/templates/product-template.xlsx', (req, res) => {
+    const path = require('path');
+    const filePath = path.join(__dirname, '../Docs/New/PRODUCT_TEMPLATE.xlsx');
+    res.download(filePath, 'PRODUCT_TEMPLATE.xlsx');
+});
+
 // ========================================
 // ERROR HANDLING MIDDLEWARE
 // ========================================
