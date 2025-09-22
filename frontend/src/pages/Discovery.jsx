@@ -148,7 +148,7 @@ const Discovery = () => {
       onSuccess: (data) => {
         queryClient.invalidateQueries(['brand-products']);
         showSuccess(data.message);
-        setShowExcelUpload(false);
+        // Keep Excel upload section visible for uploading more files
       },
       onError: (error) => {
         const errorMessage = error.response?.data?.error || 'Failed to upload Excel file';
