@@ -13,6 +13,7 @@ import BrandProfile from './pages/BrandProfile'
 import RetailerProfile from './pages/RetailerProfile'
 import Discovery from './pages/Discovery'
 import RetailerDetails from './pages/RetailerDetails'
+import GTMStrategy from './pages/GTMStrategy'
 import FitAnalysis from './pages/FitAnalysis'
 import AssortmentPlanner from './pages/AssortmentPlanner'
 import ProductManagement from './pages/ProductManagement'
@@ -80,6 +81,14 @@ function App() {
           <ProtectedRoute>
             <Layout>
               <RetailerDetails />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/gtm-strategy" element={
+          <ProtectedRoute>
+            <Layout>
+              <GTMStrategy />
             </Layout>
           </ProtectedRoute>
         } />

@@ -17,6 +17,7 @@ const invitationRoutes = require('./routes/invitations');
 const adminRoutes = require('./routes/admin');
 const discoveryRoutes = require('./routes/discovery');
 const categoriesRoutes = require('./routes/categories');
+const gtmRoutes = require('./routes/gtm');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -143,6 +144,7 @@ app.use('/api/invitations', sessionAuth, invitationRoutes);
 app.use('/api/admin', sessionAuth, adminRoutes);
 app.use('/api/discovery', sessionAuth, discoveryRoutes);
 app.use('/api/categories', categoriesRoutes);
+app.use('/api/gtm', sessionAuth, gtmRoutes);
 
 // Template download routes
 app.get('/api/templates/brand-template.xlsx', (req, res) => {

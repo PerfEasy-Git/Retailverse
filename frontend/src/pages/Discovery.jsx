@@ -18,7 +18,7 @@ import {
 
 const Discovery = () => {
   const { user } = useAuth()
-  const { showSuccess, showError } = useMessage()
+  const { showSuccess, showError, clearMessages } = useMessage()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   
@@ -173,7 +173,10 @@ const Discovery = () => {
     },
     {
       onSuccess: (data) => {
-        showSuccess(`FIT scores calculated for ${data.data.retailers.length} retailers!`);
+        // Only show success message if we're not already on FIT Scores tab
+        if (activeTab !== 'fit-scores') {
+          showSuccess(`FIT scores calculated for ${data.data.retailers.length} retailers!`);
+        }
         setFitScoreResults(data.data);
         setActiveTab('fit-scores'); // Automatically switch to FIT Scores tab
       },
@@ -300,6 +303,15 @@ const Discovery = () => {
     fitScoreMutation.mutate();
   }
 
+  // Clear any existing messages when switching to FIT Scores tab
+  useEffect(() => {
+    if (activeTab === 'fit-scores' && fitScoreResults) {
+      // Clear any success messages when viewing FIT Scores tab
+      // This prevents showing "FIT scores calculated" message when already viewing results
+      clearMessages();
+    }
+  }, [activeTab, fitScoreResults, clearMessages]);
+
   // Get available subcategories based on selected category
   const availableSubcategories = formData.category ? categorySubcategoryMap[formData.category] || [] : [];
 
@@ -324,14 +336,33 @@ const Discovery = () => {
         </p>
       </div>
         <div className="flex space-x-3">
+            {/* Show Calculate FIT Scores button only on Products tab */}
+            {activeTab === 'products' && (
+                <button
+                onClick={handleCalculateFitScore}
+                disabled={fitScoreMutation.isLoading || !products || products.length === 0}
+                className="btn btn-primary flex items-center"
+                >
+                <TrendingUp className="h-4 w-4 mr-2" />
+                {fitScoreMutation.isLoading ? 'Calculating...' : 'Calculate FIT Scores'}
+                </button>
+            )}
+            
+            {/* Show GTM button only on FIT Scores tab */}
+            {activeTab === 'fit-scores' && fitScoreResults && (
             <button
-            onClick={handleCalculateFitScore}
-            disabled={fitScoreMutation.isLoading || !products || products.length === 0}
-            className="btn btn-primary flex items-center"
-            >
-            <TrendingUp className="h-4 w-4 mr-2" />
-            {fitScoreMutation.isLoading ? 'Calculating...' : 'Calculate FIT Scores'}
+                onClick={() => navigate('/gtm-strategy', { 
+                    state: { 
+                        fitScoreResults,
+                        activeTab: 'fit-scores'
+                    } 
+                })}
+                className="btn btn-primary flex items-center"
+                >
+                <TrendingUp className="h-4 w-4 mr-2" />
+                GTM
             </button>
+            )}
         </div>
       </div>
 
