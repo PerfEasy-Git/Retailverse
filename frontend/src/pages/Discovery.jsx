@@ -85,7 +85,7 @@ const Discovery = () => {
       onSuccess: () => {
         queryClient.invalidateQueries(['brand-products']);
         showSuccess('Product added successfully!');
-        setIsAddingProduct(false);
+        // Keep form visible for adding more products
         resetForm();
       },
       onError: (error) => {
