@@ -18,7 +18,7 @@ import {
 
 const Discovery = () => {
   const { user } = useAuth()
-  const { showSuccess, showError, clearMessages } = useMessage()
+  const { showSuccess, showError } = useMessage()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   
@@ -173,10 +173,7 @@ const Discovery = () => {
     },
     {
       onSuccess: (data) => {
-        // Only show success message if we're not already on FIT Scores tab
-        if (activeTab !== 'fit-scores') {
-          showSuccess(`FIT scores calculated for ${data.data.retailers.length} retailers!`);
-        }
+        // Don't show success message - user will see results on FIT Scores tab
         setFitScoreResults(data.data);
         setActiveTab('fit-scores'); // Automatically switch to FIT Scores tab
       },
@@ -210,7 +207,7 @@ const Discovery = () => {
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
-        ...prev,
+      ...prev,
         [name]: ''
       }));
     }
@@ -303,14 +300,6 @@ const Discovery = () => {
     fitScoreMutation.mutate();
   }
 
-  // Clear any existing messages when switching to FIT Scores tab
-  useEffect(() => {
-    if (activeTab === 'fit-scores' && fitScoreResults) {
-      // Clear any success messages when viewing FIT Scores tab
-      // This prevents showing "FIT scores calculated" message when already viewing results
-      clearMessages();
-    }
-  }, [activeTab, fitScoreResults, clearMessages]);
 
   // Get available subcategories based on selected category
   const availableSubcategories = formData.category ? categorySubcategoryMap[formData.category] || [] : [];
@@ -419,7 +408,7 @@ const Discovery = () => {
                 >
                   <X className="h-5 w-5" />
                 </button>
-              </div>
+            </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* First Row: Product Name (full width) */}
@@ -427,8 +416,8 @@ const Discovery = () => {
                   <label className="block text-sm font-medium text-gray-700">
                     Product Name *
                   </label>
-                  <input
-                    type="text"
+            <input
+              type="text"
                     name="product_name"
                     value={formData.product_name}
                     onChange={handleChange}
@@ -438,15 +427,15 @@ const Discovery = () => {
                   {errors.product_name && (
                     <p className="mt-1 text-sm text-red-600">{errors.product_name}</p>
                   )}
-                </div>
+          </div>
 
                 {/* Second Row: Category and Sub Category */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
+            <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Category *
                     </label>
-                    <select
+              <select
                       name="category"
                       value={formData.category}
                       onChange={handleChange}
@@ -456,17 +445,17 @@ const Discovery = () => {
                       {Object.keys(categorySubcategoryMap).map(category => (
                         <option key={category} value={category}>{category}</option>
                       ))}
-                    </select>
+              </select>
                     {errors.category && (
                       <p className="mt-1 text-sm text-red-600">{errors.category}</p>
                     )}
-                  </div>
+            </div>
 
-                  <div>
+            <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Sub Category *
                     </label>
-                    <select
+              <select
                       name="sub_category"
                       value={formData.sub_category}
                       onChange={handleChange}
@@ -477,7 +466,7 @@ const Discovery = () => {
                       {availableSubcategories.map(subcategory => (
                         <option key={subcategory} value={subcategory}>{subcategory}</option>
                       ))}
-                    </select>
+              </select>
                     {errors.sub_category && (
                       <p className="mt-1 text-sm text-red-600">{errors.sub_category}</p>
                     )}
@@ -551,9 +540,9 @@ const Discovery = () => {
                       className="mt-1 input w-full"
                       placeholder="pieces"
                     />
-                    </div>
+            </div>
 
-                  <div>
+            <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Trade Margin (%) *
                     </label>
@@ -569,8 +558,8 @@ const Discovery = () => {
                     {errors.trade_margin && (
                       <p className="mt-1 text-sm text-red-600">{errors.trade_margin}</p>
                     )}
-                  </div>
-                </div>
+            </div>
+          </div>
 
                 <div className="flex justify-end space-x-3">
                   <button
@@ -616,12 +605,12 @@ const Discovery = () => {
             <div className="bg-blue-50 rounded-lg p-4 mb-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Upload Excel File</h3>
-                <button
+            <button
                   onClick={() => setShowExcelUpload(false)}
                   className="text-gray-400 hover:text-gray-600"
-                >
+            >
                   <X className="h-5 w-5" />
-                </button>
+            </button>
                   </div>
               
               <div className="space-y-4">
@@ -640,10 +629,10 @@ const Discovery = () => {
                       >
                         Download Template
                       </a>
-                    </div>
-                  </div>
-                </div>
-                
+          </div>
+        </div>
+      </div>
+
                 <p className="text-sm text-gray-600">
                   Upload your BRAND_TEMPLATE.xlsx file to define which categories and subcategories your brand deals in.
                 </p>
@@ -671,11 +660,11 @@ const Discovery = () => {
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
                     <p className="mt-2 text-sm text-gray-600">Processing Excel file...</p>
-                  </div>
-                )}
               </div>
-            </div>
-          )}
+                )}
+          </div>
+        </div>
+      )}
 
           {/* Products List */}
           {productsLoading ? (
@@ -745,19 +734,19 @@ const Discovery = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          <button
+            <button
                             onClick={() => handleEdit(product)}
                             className="text-primary-600 hover:text-primary-900"
                           >
                             <Edit className="h-4 w-4" />
-                          </button>
-                          <button
+            </button>
+            <button
                             onClick={() => handleDelete(product.id)}
                             className="text-red-600 hover:text-red-900"
                           >
                             <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+            </button>
+        </div>
                       </td>
                     </tr>
                   ))}
@@ -779,8 +768,8 @@ const Discovery = () => {
                   <Plus className="h-4 w-4 mr-2" />
                   Add Product
                 </button>
-              </div>
-            </div>
+                    </div>
+                  </div>
           )}
             </>
           )}
@@ -810,15 +799,15 @@ const Discovery = () => {
                 <div className="bg-white rounded-lg shadow p-4 text-center">
                   <div className="text-2xl font-bold text-gray-900">
                     1
-                  </div>
+                    </div>
                   <div className="text-sm text-gray-600">STATE PRESENCE</div>
-                </div>
-              </div>
+                    </div>
+                  </div>
 
               {/* Header */}
               <div className="mb-6">
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">RETAILER MATCH</h3>
-              </div>
+                </div>
 
               {/* Retailer Rows */}
               <div className="space-y-4">
@@ -837,8 +826,8 @@ const Discovery = () => {
                       <div>
                         <h4 className="text-xl font-bold text-gray-900 mb-1">{retailer.retailer_name}</h4>
                         <p className="text-sm text-gray-600">Contact Person</p>
-                      </div>
                     </div>
+                  </div>
 
                     {/* Section 2: Three Values (Complete Border) */}
                     <div className="bg-white rounded-lg shadow-lg border-2 border-gray-200 p-6 flex-1">
@@ -859,13 +848,13 @@ const Discovery = () => {
                           }`}>
                             {retailer.fit_score}%
                           </div>
-                        </div>
+                    </div>
 
                         {/* Store Count */}
                         <div className="text-center">
                           <div className="text-sm text-gray-600 mb-2">Store Count</div>
                           <div className="text-xl font-bold text-gray-900">{retailer.outlet_count || 0}</div>
-                        </div>
+                    </div>
                       </div>
                     </div>
 
@@ -877,10 +866,10 @@ const Discovery = () => {
                       >
                         DISCOVER MORE
                       </button>
-                    </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
             </div>
           )}
         </div>
