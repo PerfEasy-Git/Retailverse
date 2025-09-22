@@ -17,9 +17,9 @@ router.post('/generate-strategy',
     sessionAuth,
     requireRole(['brand_admin', 'brand_user']),
     [
-        body('preferences.paymentTerm').isIn(['OUTRIGHT', 'CREDIT', 'CONSIGNMENT']),
-        body('preferences.businessModel').isIn(['B2C', 'B2B', 'B2B2C']),
-        body('preferences.nmtRmt').isIn(['NMT', 'RMT', 'HYBRID']),
+        body('preferences.paymentTerm').isIn(['All', 'OUTRIGHT', 'CREDIT', 'CONSIGNMENT']),
+        body('preferences.businessModel').isIn(['All', 'B2C', 'B2B', 'B2B2C']),
+        body('preferences.nmtRmt').isIn(['All', 'NMT', 'RMT', 'HYBRID']),
         body('fitScoreResults').isObject(),
         body('fitScoreResults.retailers').isArray({ min: 1 })
     ],
@@ -163,27 +163,33 @@ async function processRetailersForGTM(retailers, preferences, brandId) {
 function calculateGTMMatchScore(retailerData, preferences, fitScore) {
     let gtmScore = fitScore; // Start with FIT score as base
 
-    // Adjust based on payment term preference
-    if (preferences.paymentTerm === 'OUTRIGHT' && retailerData.purchase_model === 'OUTRIGHT') {
-        gtmScore += 10;
-    } else if (preferences.paymentTerm === 'CREDIT' && retailerData.purchase_model === 'CREDIT') {
-        gtmScore += 10;
-    } else if (preferences.paymentTerm === 'CONSIGNMENT' && retailerData.purchase_model === 'CONSIGNMENT') {
-        gtmScore += 10;
+    // Adjust based on payment term preference (skip if "All")
+    if (preferences.paymentTerm !== 'All') {
+        if (preferences.paymentTerm === 'OUTRIGHT' && retailerData.purchase_model === 'OUTRIGHT') {
+            gtmScore += 10;
+        } else if (preferences.paymentTerm === 'CREDIT' && retailerData.purchase_model === 'CREDIT') {
+            gtmScore += 10;
+        } else if (preferences.paymentTerm === 'CONSIGNMENT' && retailerData.purchase_model === 'CONSIGNMENT') {
+            gtmScore += 10;
+        }
     }
 
-    // Adjust based on business model preference
-    if (preferences.businessModel === 'B2C' && retailerData.retailer_sale_model === 'B2C') {
-        gtmScore += 5;
-    } else if (preferences.businessModel === 'B2B' && retailerData.retailer_sale_model === 'B2B') {
-        gtmScore += 5;
+    // Adjust based on business model preference (skip if "All")
+    if (preferences.businessModel !== 'All') {
+        if (preferences.businessModel === 'B2C' && retailerData.retailer_sale_model === 'B2C') {
+            gtmScore += 5;
+        } else if (preferences.businessModel === 'B2B' && retailerData.retailer_sale_model === 'B2B') {
+            gtmScore += 5;
+        }
     }
 
-    // Adjust based on NMT/RMT preference
-    if (preferences.nmtRmt === 'NMT' && retailerData.retailer_format === 'NMT') {
-        gtmScore += 5;
-    } else if (preferences.nmtRmt === 'RMT' && retailerData.retailer_format === 'RMT') {
-        gtmScore += 5;
+    // Adjust based on NMT/RMT preference (skip if "All")
+    if (preferences.nmtRmt !== 'All') {
+        if (preferences.nmtRmt === 'NMT' && retailerData.retailer_format === 'NMT') {
+            gtmScore += 5;
+        } else if (preferences.nmtRmt === 'RMT' && retailerData.retailer_format === 'RMT') {
+            gtmScore += 5;
+        }
     }
 
     // Cap at 100%

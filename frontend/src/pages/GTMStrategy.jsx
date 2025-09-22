@@ -7,9 +7,9 @@ const GTMStrategy = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [preferences, setPreferences] = useState({
-        paymentTerm: 'OUTRIGHT',
-        businessModel: 'B2C',
-        nmtRmt: 'NMT'
+        paymentTerm: 'All',
+        businessModel: 'All',
+        nmtRmt: 'All'
     });
     const [gtmResults, setGtmResults] = useState(null);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -35,18 +35,19 @@ const GTMStrategy = () => {
         }
     );
 
-    // Filter retailers based on preferences
+    // Filter retailers based on preferences and sort by FIT score (descending)
     const filteredRetailers = useMemo(() => {
         if (!fitScoreResults?.retailers) return [];
         
-        // For now, return all retailers (we'll enhance this with actual filtering logic later)
-        // The filtering will be done on the backend when we call the GTM API
-        return fitScoreResults.retailers.map(retailer => ({
-            id: retailer.retailer_id,
-            name: retailer.retailer_name,
-            fitScore: retailer.fit_score,
-            outletCount: retailer.outlet_count || 0
-        }));
+        // Map retailers and sort by FIT score in descending order
+        return fitScoreResults.retailers
+            .map(retailer => ({
+                id: retailer.retailer_id,
+                name: retailer.retailer_name,
+                fitScore: retailer.fit_score,
+                outletCount: retailer.outlet_count || 0
+            }))
+            .sort((a, b) => b.fitScore - a.fitScore); // Sort by FIT score descending
     }, [fitScoreResults, preferences]);
 
     const handlePreferenceChange = (type, value) => {
@@ -79,9 +80,9 @@ const GTMStrategy = () => {
     };
 
     const preferenceOptions = {
-        paymentTerm: ['OUTRIGHT', 'CREDIT', 'CONSIGNMENT'],
-        businessModel: ['B2C', 'B2B', 'B2B2C'],
-        nmtRmt: ['NMT', 'RMT', 'HYBRID']
+        paymentTerm: ['All', 'OUTRIGHT', 'CREDIT', 'CONSIGNMENT'],
+        businessModel: ['All', 'B2C', 'B2B', 'B2B2C'],
+        nmtRmt: ['All', 'NMT', 'RMT', 'HYBRID']
     };
 
     return (
