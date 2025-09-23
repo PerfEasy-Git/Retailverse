@@ -354,6 +354,8 @@ router.get('/:id/details', async (req, res) => {
                     categorySize = retailerFitScore.market_size_display || "0.0Cr";
                     categoryPercentage = retailerFitScore.market_share_display || "0%";
                     console.log(`🔍 Debug - Retailer Details - Market Size: ${categorySize}, Market Share: ${categoryPercentage}`);
+                    console.log(`🔍 Debug - Raw market_size_display from backend: "${retailerFitScore.market_size_display}"`);
+                    console.log(`🔍 Debug - Final categorySize being sent to frontend: "${categorySize}"`);
                 }
             }
             
@@ -410,7 +412,7 @@ router.get('/:id/details', async (req, res) => {
                 contactPerson: `${retailer.first_name || ''} ${retailer.last_name || ''}`.trim() || "Contact Person",
                 email: retailer.email,
                 matchScore: fitScore,
-                categorySize: `${categorySize}Cr`,
+                categorySize: categorySize,
                 categoryPercentage: categoryPercentage,
                 subCategoryShare,
                 brandShare,

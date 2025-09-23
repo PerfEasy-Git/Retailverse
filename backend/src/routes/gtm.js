@@ -215,7 +215,7 @@ async function getMarketData(retailerId) {
         }
 
         return {
-            marketSize: `${marketSize}Cr`,
+            marketSize: marketSize,
             categoryCount: marketResult.rows[0]?.category_count || 0
         };
     } catch (error) {
