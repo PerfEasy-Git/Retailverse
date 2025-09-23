@@ -360,10 +360,27 @@ class FitScoreService {
                 const result = `${lakhs.toFixed(1)}L`;
                 console.log(`🔍 Debug - formatMarketSize result: ${result}`);
                 return result;
-            } else {
+            } else if (lakhs >= 1) {
                 const result = `${lakhs.toFixed(2)}L`;
                 console.log(`🔍 Debug - formatMarketSize result: ${result}`);
                 return result;
+            } else {
+                // For values less than 1 Lakh, show in thousands with more precision
+                const thousands = amountNum / 1000;
+                console.log(`🔍 Debug - thousands: ${thousands}`);
+                if (thousands >= 100) {
+                    const result = `${thousands.toFixed(0)}K`;
+                    console.log(`🔍 Debug - formatMarketSize result: ${result}`);
+                    return result;
+                } else if (thousands >= 10) {
+                    const result = `${thousands.toFixed(1)}K`;
+                    console.log(`🔍 Debug - formatMarketSize result: ${result}`);
+                    return result;
+                } else {
+                    const result = `${thousands.toFixed(2)}K`;
+                    console.log(`🔍 Debug - formatMarketSize result: ${result}`);
+                    return result;
+                }
             }
         }
         
