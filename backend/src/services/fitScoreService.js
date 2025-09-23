@@ -220,6 +220,7 @@ class FitScoreService {
 
             console.log(`📊 Total Market Size: ${this.formatMarketSize(totalMarketSize)} (${totalResult.rows[0].retailer_count} retailers, ${totalResult.rows[0].product_count} products)`);
             console.log(`🔍 Debug - Total Market Size Raw: ${totalMarketSize}`);
+            console.log(`🔍 Debug - Formatted Total Market Size: ${this.formatMarketSize(totalMarketSize)} (from raw: ${totalMarketSize})`);
             console.log(`🔍 Debug - Category Filters: ${JSON.stringify(categoryFilters)}`);
             console.log(`🔍 Debug - Subcategory Filters: ${JSON.stringify(subcategoryFilters)}`);
             console.log(`🔍 Debug - SQL Query Result:`, JSON.stringify(totalResult.rows[0], null, 2));
@@ -306,6 +307,7 @@ class FitScoreService {
             console.log(`📊 Retailer ${retailerId} Market Size: ${this.formatMarketSize(marketSize)} (${marketShare.toFixed(1)}% market share)`);
             console.log(`🔍 Debug - Retailer ${retailerId} Market Size Raw: ${marketSize}`);
             console.log(`🔍 Debug - Retailer ${retailerId} Total Market Size: ${totalMarketSize}`);
+            console.log(`🔍 Debug - Formatted Market Size: ${this.formatMarketSize(marketSize)} (from raw: ${marketSize})`);
             console.log(`🔍 Debug - Retailer ${retailerId} Individual Query Result:`, JSON.stringify(individualResult.rows[0], null, 2));
             console.log(`🔍 Debug - Retailer ${retailerId} Total Query Result:`, JSON.stringify(totalResult.rows[0], null, 2));
 
@@ -340,6 +342,19 @@ class FitScoreService {
         
         // Convert to Crores (divide by 1,00,00,000)
         const crores = amountNum / 10000000;
+        
+        // Handle very small values that would show as 0.00Cr
+        if (crores < 0.01) {
+            // For values less than 0.01Cr, show in Lakhs (divide by 1,00,000)
+            const lakhs = amountNum / 100000;
+            if (lakhs >= 100) {
+                return `${lakhs.toFixed(0)}L`;
+            } else if (lakhs >= 10) {
+                return `${lakhs.toFixed(1)}L`;
+            } else {
+                return `${lakhs.toFixed(2)}L`;
+            }
+        }
         
         if (crores >= 100) {
             return `${crores.toFixed(0)}Cr`;
