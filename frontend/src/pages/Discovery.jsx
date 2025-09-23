@@ -37,7 +37,7 @@ const Discovery = () => {
     mrp: '',
     asp: '',
     quantity: '',
-    uom: '',
+    uom: 'Pieces',
     trade_margin: ''
   })
 
@@ -191,7 +191,7 @@ const Discovery = () => {
       mrp: '',
       asp: '',
       quantity: '',
-      uom: '',
+      uom: 'Pieces',
       trade_margin: ''
     });
     setErrors({});
@@ -449,7 +449,7 @@ const Discovery = () => {
                     {errors.category && (
                       <p className="mt-1 text-sm text-red-600">{errors.category}</p>
                     )}
-            </div>
+          </div>
 
             <div>
                     <label className="block text-sm font-medium text-gray-700">
@@ -526,20 +526,23 @@ const Discovery = () => {
                     {errors.quantity && (
                       <p className="mt-1 text-sm text-red-600">{errors.quantity}</p>
                     )}
-                    </div>
+            </div>
 
-                  <div>
+            <div>
                     <label className="block text-sm font-medium text-gray-700">
                       UOM
                     </label>
-                    <input
-                      type="text"
+              <select
                       name="uom"
                       value={formData.uom}
                       onChange={handleChange}
                       className="mt-1 input w-full"
-                      placeholder="pieces"
-                    />
+                    >
+                      <option value="">Select UOM</option>
+                      <option value="Pieces">Pieces</option>
+                      <option value="GM">GM</option>
+                      <option value="ML">ML</option>
+              </select>
             </div>
 
             <div>
