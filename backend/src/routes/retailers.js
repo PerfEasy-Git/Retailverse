@@ -345,10 +345,15 @@ router.get('/:id/details', async (req, res) => {
                 
                 // Find the FIT score and market size for this specific retailer
                 const retailerFitScore = fitScoreResult.retailers.find(r => r.retailer_id == id);
+                console.log(`🔍 Debug - Looking for retailer ID: ${id}`);
+                console.log(`🔍 Debug - Available retailers:`, fitScoreResult.retailers.map(r => ({ id: r.retailer_id, name: r.retailer_name })));
+                console.log(`🔍 Debug - Found retailer:`, retailerFitScore);
+                
                 if (retailerFitScore) {
                     fitScore = retailerFitScore.fit_score;
                     categorySize = retailerFitScore.market_size_display || "0.0Cr";
                     categoryPercentage = retailerFitScore.market_share_display || "0%";
+                    console.log(`🔍 Debug - Retailer Details - Market Size: ${categorySize}, Market Share: ${categoryPercentage}`);
                 }
             }
             

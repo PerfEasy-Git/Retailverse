@@ -239,7 +239,7 @@ const RetailerDetails = () => {
                 </div>
                 <div className="text-lg text-gray-600 mt-4">
                   Category Market Size: <span className="font-semibold text-gray-900">{retailerData.categorySize}</span> • 
-                  Market Share: <span className="font-semibold text-gray-900">{retailerData.categoryPercentage}%</span>
+                  Market Share: <span className="font-semibold text-gray-900">{retailerData.categoryPercentage}</span>
                 </div>
               </div>
             </div>

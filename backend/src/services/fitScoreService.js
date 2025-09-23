@@ -340,28 +340,45 @@ class FitScoreService {
         const amountNum = parseFloat(amount);
         if (isNaN(amountNum)) return "0.0Cr";
         
+        console.log(`🔍 Debug - formatMarketSize input: ${amount} (parsed: ${amountNum})`);
+        
         // Convert to Crores (divide by 1,00,00,000)
         const crores = amountNum / 10000000;
+        console.log(`🔍 Debug - crores: ${crores}`);
         
         // Handle very small values that would show as 0.00Cr
         if (crores < 0.01) {
             // For values less than 0.01Cr, show in Lakhs (divide by 1,00,000)
             const lakhs = amountNum / 100000;
+            console.log(`🔍 Debug - lakhs: ${lakhs}`);
+            
             if (lakhs >= 100) {
-                return `${lakhs.toFixed(0)}L`;
+                const result = `${lakhs.toFixed(0)}L`;
+                console.log(`🔍 Debug - formatMarketSize result: ${result}`);
+                return result;
             } else if (lakhs >= 10) {
-                return `${lakhs.toFixed(1)}L`;
+                const result = `${lakhs.toFixed(1)}L`;
+                console.log(`🔍 Debug - formatMarketSize result: ${result}`);
+                return result;
             } else {
-                return `${lakhs.toFixed(2)}L`;
+                const result = `${lakhs.toFixed(2)}L`;
+                console.log(`🔍 Debug - formatMarketSize result: ${result}`);
+                return result;
             }
         }
         
         if (crores >= 100) {
-            return `${crores.toFixed(0)}Cr`;
+            const result = `${crores.toFixed(0)}Cr`;
+            console.log(`🔍 Debug - formatMarketSize result: ${result}`);
+            return result;
         } else if (crores >= 10) {
-            return `${crores.toFixed(1)}Cr`;
+            const result = `${crores.toFixed(1)}Cr`;
+            console.log(`🔍 Debug - formatMarketSize result: ${result}`);
+            return result;
         } else {
-            return `${crores.toFixed(2)}Cr`;
+            const result = `${crores.toFixed(2)}Cr`;
+            console.log(`🔍 Debug - formatMarketSize result: ${result}`);
+            return result;
         }
     }
 
