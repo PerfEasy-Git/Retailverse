@@ -811,7 +811,9 @@ const Discovery = () => {
 
               {/* Retailer Rows */}
               <div className="space-y-4">
-                {fitScoreResults.retailers.map((retailer, index) => (
+                {fitScoreResults.retailers
+                  .sort((a, b) => (b.fit_score || 0) - (a.fit_score || 0)) // Sort by FIT score descending
+                  .map((retailer, index) => (
                   <div key={retailer.retailer_id || `retailer-${index}`} className="flex items-center space-x-4">
                     {/* Section 1: Logo + Name (Complete Border) */}
                     <div className="bg-white rounded-lg shadow-lg border-2 border-gray-200 p-6 flex items-center w-80">

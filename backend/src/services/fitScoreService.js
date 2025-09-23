@@ -101,6 +101,9 @@ class FitScoreService {
                 else lowPriority++;
             }
 
+            // Sort retailers by FIT score in descending order (highest scores first)
+            retailers.sort((a, b) => b.fit_score - a.fit_score);
+
             const summary = {
                 total_retailers: retailers.length,
                 high_priority: highPriority,
@@ -111,6 +114,7 @@ class FitScoreService {
             console.log(`🎯 FIT Score Calculation Complete!`);
             console.log(`📊 Summary: ${summary.total_retailers} retailers analyzed`);
             console.log(`   └─ High Priority: ${summary.high_priority}, Medium: ${summary.medium_priority}, Low: ${summary.low_priority}`);
+            console.log(`📈 Top 5 retailers by FIT score:`, retailers.slice(0, 5).map(r => `${r.retailer_name}: ${r.fit_score}%`));
 
             return {
                 retailers,
