@@ -175,6 +175,11 @@ class FitScoreService {
             });
 
             // Calculate total market size across all matching retailers
+            console.log(`🔍 Debug - About to execute total market size query with filters:`, {
+                categoryFilters,
+                subcategoryFilters
+            });
+            
             const totalResult = await db.query(`
                 SELECT 
                     SUM(rpm.annual_sale) as total_market_size,
@@ -217,6 +222,8 @@ class FitScoreService {
             console.log(`🔍 Debug - Total Market Size Raw: ${totalMarketSize}`);
             console.log(`🔍 Debug - Category Filters: ${JSON.stringify(categoryFilters)}`);
             console.log(`🔍 Debug - Subcategory Filters: ${JSON.stringify(subcategoryFilters)}`);
+            console.log(`🔍 Debug - SQL Query Result:`, JSON.stringify(totalResult.rows[0], null, 2));
+            console.log(`🔍 Debug - Selected Categories Input:`, JSON.stringify(selectedCategories, null, 2));
 
             return {
                 total_market_size: parseInt(totalMarketSize) || 0,
@@ -263,6 +270,12 @@ class FitScoreService {
             });
 
             // Calculate individual retailer's market size
+            console.log(`🔍 Debug - About to execute individual market size query for retailer ${retailerId} with filters:`, {
+                retailerId,
+                categoryFilters,
+                subcategoryFilters
+            });
+            
             const individualResult = await db.query(`
                 SELECT 
                     SUM(rpm.annual_sale) as market_size,
@@ -293,6 +306,8 @@ class FitScoreService {
             console.log(`📊 Retailer ${retailerId} Market Size: ${this.formatMarketSize(marketSize)} (${marketShare.toFixed(1)}% market share)`);
             console.log(`🔍 Debug - Retailer ${retailerId} Market Size Raw: ${marketSize}`);
             console.log(`🔍 Debug - Retailer ${retailerId} Total Market Size: ${totalMarketSize}`);
+            console.log(`🔍 Debug - Retailer ${retailerId} Individual Query Result:`, JSON.stringify(individualResult.rows[0], null, 2));
+            console.log(`🔍 Debug - Retailer ${retailerId} Total Query Result:`, JSON.stringify(totalResult.rows[0], null, 2));
 
             return {
                 market_size: parseInt(marketSize) || 0,
