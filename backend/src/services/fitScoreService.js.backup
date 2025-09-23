@@ -58,6 +58,8 @@ class FitScoreService {
                     r.*,
                     STRING_AGG(DISTINCT p.category, ',') as product_categories,
                     STRING_AGG(DISTINCT p.sub_category, ',') as product_subcategories,
+                    AVG(rpm.avg_selling_price) as avg_asp,
+                    AVG(rpm.retailer_margin) as avg_margin,
                     COUNT(DISTINCT p.id) as product_count
                 FROM retailers r
                 LEFT JOIN retailer_product_mappings rpm ON r.id = rpm.retailer_id
@@ -74,7 +76,7 @@ class FitScoreService {
             let lowPriority = 0;
 
             for (const retailer of retailersResult.rows) {
-                const fitScore = await this.calculateFitScore(brandData, retailer, selectedCategories);
+                const fitScore = this.calculateFitScore(brandData, retailer, selectedCategories);
                 
                 console.log(`📈 ${retailer.retailer_name}: FIT Score = ${fitScore.overallScore} (${fitScore.recommendation.priority})`);
                 console.log(`   └─ Category: ${fitScore.categoryScore}%, Subcategory: ${fitScore.subcategoryScore}%, Margin: ${fitScore.marginScore}%, ASP: ${fitScore.aspScore}%`);
@@ -124,239 +126,9 @@ class FitScoreService {
     }
 
     // ========================================
-    // GET SUBCATEGORY STATISTICS
+    // CALCULATE FIT SCORE FOR SINGLE RETAILER
     // ========================================
-    static async getSubcategoryStatistics(category, subcategory) {
-        try {
-            const result = await db.query(`
-                SELECT 
-                    p.category,
-                    p.sub_category,
-                    MIN(rpm.avg_selling_price) as min_asp,
-                    MAX(rpm.avg_selling_price) as max_asp,
-                    AVG(rpm.retailer_margin) as avg_margin,
-                    COUNT(DISTINCT rpm.retailer_id) as retailer_count,
-                    COUNT(DISTINCT rpm.product_id) as product_count
-                FROM retailer_product_mappings rpm
-                JOIN products p ON rpm.product_id = p.id
-                WHERE p.category = $1 AND p.sub_category = $2
-                GROUP BY p.category, p.sub_category
-            `, [category, subcategory]);
-
-            if (result.rows.length === 0) {
-                return {
-                    min_asp: 0,
-                    max_asp: 0,
-                    avg_margin: 0,
-                    retailer_count: 0,
-                    product_count: 0
-                };
-            }
-
-            return result.rows[0];
-        } catch (error) {
-            console.error('Error getting subcategory statistics:', error);
-            return {
-                min_asp: 0,
-                max_asp: 0,
-                avg_margin: 0,
-                retailer_count: 0,
-                product_count: 0
-            };
-        }
-    }
-
-    // ========================================
-    // CORE FIT SCORE CALCULATION
-    // ========================================
-    static async calculateFitScore(brandData, retailerData, selectedCategories) {
-        // Extract brand's selected categories and subcategories
-        const brandCategories = selectedCategories.map(cat => cat.category);
-        const brandSubcategories = selectedCategories.flatMap(cat => cat.sub_categories);
-        
-        // Get retailer's product categories and subcategories
-        const retailerProductCategories = retailerData.product_categories ? 
-            retailerData.product_categories.split(',').map(cat => cat.trim()) : [];
-        const retailerProductSubcategories = retailerData.product_subcategories ? 
-            retailerData.product_subcategories.split(',').map(subcat => subcat.trim()) : [];
-        
-        // Calculate individual scores
-        const categoryScore = this.calculateCategoryScore(brandCategories, retailerProductCategories);
-        const subcategoryScore = this.calculateSubcategoryScore(brandSubcategories, retailerProductSubcategories);
-        
-        // Calculate margin and ASP scores for each brand product
-        let totalMarginScore = 0;
-        let totalASPScore = 0;
-        let productCount = 0;
-
-        for (const selectedCategory of selectedCategories) {
-            for (const subcategory of selectedCategory.sub_categories) {
-                // Check if retailer has this subcategory
-                if (retailerProductSubcategories.includes(subcategory)) {
-                    const brandMargin = selectedCategory.avg_trade_margin;
-                    const brandASP = selectedCategory.avg_asp;
-                    
-                    // Calculate scores using subcategory-based logic
-                    const marginScore = await this.calculateMarginScoreBySubcategory(
-                        brandMargin, 
-                        selectedCategory.category, 
-                        subcategory
-                    );
-                    const aspScore = await this.calculateASPScoreBySubcategory(
-                        brandASP, 
-                        selectedCategory.category, 
-                        subcategory
-                    );
-                    
-                    totalMarginScore += marginScore;
-                    totalASPScore += aspScore;
-                    productCount++;
-                }
-            }
-        }
-
-        // Average the scores across all matching products
-        const avgMarginScore = productCount > 0 ? totalMarginScore / productCount : 0;
-        const avgASPScore = productCount > 0 ? totalASPScore / productCount : 0;
-
-        // Overall Score (updated weights as per business logic)
-        const overallScore = (categoryScore * 0.6) + (subcategoryScore * 0.0) + 
-                            (avgMarginScore * 0.3) + (avgASPScore * 0.1);
-
-        return {
-            overallScore: Math.round(overallScore),
-            categoryScore: Math.round(categoryScore),
-            subcategoryScore: Math.round(subcategoryScore),
-            marginScore: Math.round(avgMarginScore),
-            aspScore: Math.round(avgASPScore),
-            recommendation: this.getRecommendation(overallScore)
-        };
-    }
-
-    // ========================================
-    // CATEGORY MATCH CALCULATION (60% Weight)
-    // ========================================
-    static calculateCategoryScore(brandCategories, retailerCategories) {
-        if (brandCategories.length === 0 || retailerCategories.length === 0) return 0;
-        
-        const matches = brandCategories.filter(cat => 
-            retailerCategories.some(retCat => retCat.trim() === cat.trim())
-        );
-        
-        return (matches.length / brandCategories.length) * 100;
-    }
-
-    // ========================================
-    // SUBCATEGORY MATCH CALCULATION (0% Weight)
-    // ========================================
-    static calculateSubcategoryScore(brandSubcategories, retailerSubcategories) {
-        if (brandSubcategories.length === 0 || retailerSubcategories.length === 0) return 0;
-        
-        const matches = brandSubcategories.filter(subcat => 
-            retailerSubcategories.some(retSubcat => retSubcat.trim() === subcat.trim())
-        );
-        
-        return (matches.length / brandSubcategories.length) * 100;
-    }
-
-    // ========================================
-    // TRADE MARGIN MATCH CALCULATION BY SUBCATEGORY (30% Weight)
-    // ========================================
-    static async calculateMarginScoreBySubcategory(brandMargin, category, subcategory) {
-        try {
-            if (!brandMargin) return 0;
-            
-            const brandMarginNum = parseFloat(brandMargin.toString().replace(/[^\d.]/g, ''));
-            if (isNaN(brandMarginNum)) return 0;
-
-            // Get subcategory statistics
-            const subcategoryStats = await this.getSubcategoryStatistics(category, subcategory);
-            
-            if (subcategoryStats.avg_margin === 0) {
-                console.log(`⚠️ No subcategory data found for ${category} - ${subcategory}`);
-                return 0;
-            }
-
-            console.log(`📊 Subcategory ${category} - ${subcategory}: Avg Margin = ${subcategoryStats.avg_margin}%, Brand Margin = ${brandMarginNum}%`);
-
-            // If brand margin is higher or equal to subcategory average, give full score
-            if (brandMarginNum >= subcategoryStats.avg_margin) {
-                return 100;
-            } else {
-                // Proportional score based on how close brand margin is to subcategory average
-                return (brandMarginNum / subcategoryStats.avg_margin) * 100;
-            }
-        } catch (error) {
-            console.error('Error calculating margin score by subcategory:', error);
-            return 0;
-        }
-    }
-
-    // ========================================
-    // ASP MATCH CALCULATION BY SUBCATEGORY (10% Weight)
-    // ========================================
-    static async calculateASPScoreBySubcategory(brandASP, category, subcategory) {
-        try {
-            if (!brandASP) return 0;
-            
-            const brandASPNum = parseFloat(brandASP.toString().replace(/[^\d.]/g, ''));
-            if (isNaN(brandASPNum)) return 0;
-
-            // Get subcategory statistics
-            const subcategoryStats = await this.getSubcategoryStatistics(category, subcategory);
-            
-            if (subcategoryStats.min_asp === 0 || subcategoryStats.max_asp === 0) {
-                console.log(`⚠️ No subcategory data found for ${category} - ${subcategory}`);
-                return 0;
-            }
-
-            // Calculate range with 10% buffer
-            const minRange = subcategoryStats.min_asp * 0.9; // 10% below min
-            const maxRange = subcategoryStats.max_asp * 1.1; // 10% above max
-
-            console.log(`📊 Subcategory ${category} - ${subcategory}: ASP Range = ${minRange.toFixed(2)} - ${maxRange.toFixed(2)}, Brand ASP = ${brandASPNum}`);
-
-            // Check if brand ASP is within range
-            if (brandASPNum >= minRange && brandASPNum <= maxRange) {
-                return 100;
-            } else {
-                return 0;
-            }
-        } catch (error) {
-            console.error('Error calculating ASP score by subcategory:', error);
-            return 0;
-        }
-    }
-
-    // ========================================
-    // RECOMMENDATION SYSTEM
-    // ========================================
-    static getRecommendation(overallScore) {
-        if (overallScore >= 80) {
-            return {
-                priority: 'High',
-                action: 'Launch in All Stores',
-                notes: 'Prefer Outright if credit days < 30'
-            };
-        } else if (overallScore >= 60) {
-            return {
-                priority: 'Medium',
-                action: 'Pilot Launch in Select Stores',
-                notes: 'Prefer SOR if competition high'
-            };
-        } else {
-            return {
-                priority: 'Low',
-                action: 'Delay Entry',
-                notes: 'Suggest rework or reprice strategy'
-            };
-        }
-    }
-
-    // ========================================
-    // LEGACY METHODS (Keep for backward compatibility)
-    // ========================================
-    static async calculateFitScoreLegacy(brandId, retailerId) {
+    static async calculateFitScore(brandId, retailerId) {
         try {
             // Get brand data
             const brandResult = await db.query(`
@@ -421,7 +193,7 @@ class FitScoreService {
                 });
             }
 
-            return this.calculateFitScoreLegacy(brandData, retailerData, selectedCategories);
+            return this.calculateFitScore(brandData, retailerData, selectedCategories);
 
         } catch (error) {
             console.error('FIT Score calculation error:', error);
@@ -429,6 +201,136 @@ class FitScoreService {
         }
     }
 
+    // ========================================
+    // CORE FIT SCORE CALCULATION
+    // ========================================
+    static calculateFitScore(brandData, retailerData, selectedCategories) {
+        // Extract brand's selected categories and subcategories
+        const brandCategories = selectedCategories.map(cat => cat.category);
+        const brandSubcategories = selectedCategories.flatMap(cat => cat.sub_categories);
+        
+        // Get retailer's product categories and subcategories
+        const retailerProductCategories = retailerData.product_categories ? 
+            retailerData.product_categories.split(',').map(cat => cat.trim()) : [];
+        const retailerProductSubcategories = retailerData.product_subcategories ? 
+            retailerData.product_subcategories.split(',').map(subcat => subcat.trim()) : [];
+        
+        // Calculate individual scores
+        const categoryScore = this.calculateCategoryScore(brandCategories, retailerProductCategories);
+        const subcategoryScore = this.calculateSubcategoryScore(brandSubcategories, retailerProductSubcategories);
+        const marginScore = this.calculateMarginScore(brandData.avg_trade_margin, retailerData.avg_margin);
+        const aspScore = this.calculateASPScore(brandData.avg_trade_margin, retailerData.avg_asp);
+
+        // Overall Score
+        const overallScore = (categoryScore * 0.3) + (subcategoryScore * 0.3) + 
+                            (marginScore * 0.1) + (aspScore * 0.3);
+
+        return {
+            overallScore: Math.round(overallScore),
+            categoryScore: Math.round(categoryScore),
+            subcategoryScore: Math.round(subcategoryScore),
+            marginScore: Math.round(marginScore),
+            aspScore: Math.round(aspScore),
+            recommendation: this.getRecommendation(overallScore)
+        };
+    }
+
+    // ========================================
+    // CATEGORY MATCH CALCULATION (30% Weight)
+    // ========================================
+    static calculateCategoryScore(brandCategories, retailerCategories) {
+        if (brandCategories.length === 0 || retailerCategories.length === 0) return 0;
+        
+        const matches = brandCategories.filter(cat => 
+            retailerCategories.some(retCat => retCat.trim() === cat.trim())
+        );
+        
+        return (matches.length / brandCategories.length) * 100;
+    }
+
+    // ========================================
+    // SUBCATEGORY MATCH CALCULATION (30% Weight)
+    // ========================================
+    static calculateSubcategoryScore(brandSubcategories, retailerSubcategories) {
+        if (brandSubcategories.length === 0 || retailerSubcategories.length === 0) return 0;
+        
+        const matches = brandSubcategories.filter(subcat => 
+            retailerSubcategories.some(retSubcat => retSubcat.trim() === subcat.trim())
+        );
+        
+        return (matches.length / brandSubcategories.length) * 100;
+    }
+
+    // ========================================
+    // TRADE MARGIN MATCH CALCULATION (10% Weight)
+    // ========================================
+    static calculateMarginScore(brandMargin, retailerMargin) {
+        if (!brandMargin || !retailerMargin) return 0;
+        
+        const brandMarginNum = parseFloat(brandMargin.replace(/[^\d.]/g, ''));
+        const retailerMarginNum = parseFloat(retailerMargin);
+        
+        if (isNaN(brandMarginNum) || isNaN(retailerMarginNum)) return 0;
+        
+        if (brandMarginNum >= retailerMarginNum) {
+            return 100; // Full points if brand margin is higher or equal
+        } else {
+            return (brandMarginNum / retailerMarginNum) * 100; // Partial points
+        }
+    }
+
+    // ========================================
+    // ASP MATCH CALCULATION (30% Weight)
+    // ========================================
+    static calculateASPScore(brandMargin, retailerASP) {
+        if (!brandMargin || !retailerASP) return 0;
+        
+        const brandMarginNum = parseFloat(brandMargin.replace(/[^\d.]/g, ''));
+        const aspNum = parseFloat(retailerASP);
+        
+        if (isNaN(brandMarginNum) || isNaN(aspNum)) return 0;
+        
+        // Calculate ASP compatibility score
+        const difference = Math.abs(brandMarginNum - aspNum);
+        const threshold = aspNum * 0.15; // ±15% threshold
+        
+        if (difference <= threshold) {
+            return 100; // Full points within threshold
+        } else {
+            // Calculate penalty based on how far outside threshold
+            const penalty = (difference - threshold) / aspNum;
+            return Math.max(0, 100 - (penalty * 100));
+        }
+    }
+
+    // ========================================
+    // RECOMMENDATION SYSTEM
+    // ========================================
+    static getRecommendation(overallScore) {
+        if (overallScore >= 80) {
+            return {
+                priority: 'High',
+                action: 'Launch in All Stores',
+                notes: 'Prefer Outright if credit days < 30'
+            };
+        } else if (overallScore >= 60) {
+            return {
+                priority: 'Medium',
+                action: 'Pilot Launch in Select Stores',
+                notes: 'Prefer SOR if competition high'
+            };
+        } else {
+            return {
+                priority: 'Low',
+                action: 'Delay Entry',
+                notes: 'Suggest rework or reprice strategy'
+            };
+        }
+    }
+
+    // ========================================
+    // GET FIT SCORES FOR BRAND
+    // ========================================
     static async getFitScoresForBrand(brandId) {
         try {
             const result = await db.query(`
@@ -438,6 +340,8 @@ class FitScoreService {
                     r.retailer_category,
                     r.retailer_format,
                     r.outlet_count,
+                    -- This would be calculated FIT scores stored in a table
+                    -- For now, return basic retailer info
                     0 as fit_score,
                     'Not Calculated' as recommendation
                 FROM retailers r
@@ -462,9 +366,12 @@ class FitScoreService {
         }
     }
 
+    // ========================================
+    // GET DETAILED FIT SCORE
+    // ========================================
     static async getDetailedFitScore(brandId, retailerId) {
         try {
-            const fitScore = await this.calculateFitScoreLegacy(brandId, retailerId);
+            const fitScore = await this.calculateFitScore(brandId, retailerId);
             
             // Get retailer details
             const retailerResult = await db.query(`
