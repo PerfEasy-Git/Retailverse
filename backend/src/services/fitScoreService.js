@@ -86,6 +86,7 @@ class FitScoreService {
                 console.log(`📈 ${retailer.retailer_name}: FIT Score = ${fitScore.overallScore} (${fitScore.recommendation.priority})`);
                 console.log(`   └─ Category: ${fitScore.categoryScore}%, Subcategory: ${fitScore.subcategoryScore}%, Margin: ${fitScore.marginScore}%, ASP: ${fitScore.aspScore}%`);
                 console.log(`   └─ Market Size: ${marketSizeData.market_size_display}, Market Share: ${marketSizeData.market_share_display}`);
+                console.log(`🔍 Debug - Market Size Data:`, JSON.stringify(marketSizeData, null, 2));
                 
                 retailers.push({
                     retailer_id: retailer.id,
@@ -213,6 +214,9 @@ class FitScoreService {
             }));
 
             console.log(`📊 Total Market Size: ${this.formatMarketSize(totalMarketSize)} (${totalResult.rows[0].retailer_count} retailers, ${totalResult.rows[0].product_count} products)`);
+            console.log(`🔍 Debug - Total Market Size Raw: ${totalMarketSize}`);
+            console.log(`🔍 Debug - Category Filters: ${JSON.stringify(categoryFilters)}`);
+            console.log(`🔍 Debug - Subcategory Filters: ${JSON.stringify(subcategoryFilters)}`);
 
             return {
                 total_market_size: parseInt(totalMarketSize) || 0,
@@ -287,6 +291,8 @@ class FitScoreService {
             const marketShare = totalMarketSize > 0 ? (marketSize / totalMarketSize) * 100 : 0;
 
             console.log(`📊 Retailer ${retailerId} Market Size: ${this.formatMarketSize(marketSize)} (${marketShare.toFixed(1)}% market share)`);
+            console.log(`🔍 Debug - Retailer ${retailerId} Market Size Raw: ${marketSize}`);
+            console.log(`🔍 Debug - Retailer ${retailerId} Total Market Size: ${totalMarketSize}`);
 
             return {
                 market_size: parseInt(marketSize) || 0,
