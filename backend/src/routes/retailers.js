@@ -324,13 +324,13 @@ router.get('/:id/details', async (req, res) => {
 
         const retailer = retailerResult.rows[0];
 
-        // Get FIT score by calculating it on-the-fly (same logic as Discovery page)
+        // Get FIT score and market size by calculating it on-the-fly (same logic as Discovery page)
         let fitScore = 0;
-        let categorySize = 0;
-        let categoryPercentage = 0;
+        let categorySize = "0.0Cr";
+        let categoryPercentage = "0%";
         
         try {
-            // Import the FitScoreService to calculate FIT score
+            // Import the FitScoreService to calculate FIT score and market size
             const FitScoreService = require('../services/fitScoreService');
             
             // Get the brand ID for the current user (assuming brand user is viewing retailer details)
@@ -343,39 +343,20 @@ router.get('/:id/details', async (req, res) => {
                 const brandId = brandResult.rows[0].id;
                 const fitScoreResult = await FitScoreService.calculateFitScoreForAllRetailers(brandId);
                 
-                // Find the FIT score for this specific retailer
+                // Find the FIT score and market size for this specific retailer
                 const retailerFitScore = fitScoreResult.retailers.find(r => r.retailer_id == id);
                 if (retailerFitScore) {
                     fitScore = retailerFitScore.fit_score;
+                    categorySize = retailerFitScore.market_size_display || "0.0Cr";
+                    categoryPercentage = retailerFitScore.market_share_display || "0%";
                 }
-            }
-            
-            // Calculate real market size and category percentage
-            const marketSizeResult = await db.query(`
-                SELECT 
-                    SUM(rpm.annual_sale * rpm.avg_selling_price) as total_market_size,
-                    COUNT(DISTINCT p.category) as category_count
-                FROM retailer_product_mappings rpm
-                JOIN products p ON rpm.product_id = p.id
-                WHERE rpm.retailer_id = $1
-            `, [id]);
-            
-            if (marketSizeResult.rows.length > 0 && marketSizeResult.rows[0].total_market_size) {
-                // Convert to crores (divide by 10,000,000)
-                categorySize = (marketSizeResult.rows[0].total_market_size / 10000000).toFixed(1);
-                
-                // Calculate category percentage (simplified - could be enhanced with industry data)
-                // For now, using a formula based on store count and market presence
-                const storeCount = retailer.outlet_count || 0;
-                const stateCount = retailer.state_count || 0;
-                categoryPercentage = Math.min(Math.round((storeCount * stateCount) / 10), 100);
             }
             
         } catch (error) {
             console.log('Could not calculate FIT score or market data:', error.message);
             fitScore = 0; // Default to 0 if calculation fails
-            categorySize = 0;
-            categoryPercentage = 0;
+            categorySize = "0.0Cr";
+            categoryPercentage = "0%";
         }
 
         // Get category and brand share data (mock for now - will be replaced with real data)

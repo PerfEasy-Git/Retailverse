@@ -68,6 +68,10 @@ class FitScoreService {
 
             console.log(`🏪 Found ${retailersResult.rows.length} retailers to analyze`);
 
+            // Calculate total market size once for all retailers
+            const totalMarketSizeData = await this.calculateTotalMarketSize(selectedCategories);
+            console.log(`📊 Total Market Size calculated: ${totalMarketSizeData.total_market_size_display}`);
+
             const retailers = [];
             let highPriority = 0;
             let mediumPriority = 0;
@@ -76,8 +80,12 @@ class FitScoreService {
             for (const retailer of retailersResult.rows) {
                 const fitScore = await this.calculateFitScore(brandData, retailer, selectedCategories);
                 
+                // Calculate individual market size for this retailer
+                const marketSizeData = await this.calculateIndividualMarketSize(retailer.id, selectedCategories);
+                
                 console.log(`📈 ${retailer.retailer_name}: FIT Score = ${fitScore.overallScore} (${fitScore.recommendation.priority})`);
                 console.log(`   └─ Category: ${fitScore.categoryScore}%, Subcategory: ${fitScore.subcategoryScore}%, Margin: ${fitScore.marginScore}%, ASP: ${fitScore.aspScore}%`);
+                console.log(`   └─ Market Size: ${marketSizeData.market_size_display}, Market Share: ${marketSizeData.market_share_display}`);
                 
                 retailers.push({
                     retailer_id: retailer.id,
@@ -92,7 +100,11 @@ class FitScoreService {
                         subcategory_score: fitScore.subcategoryScore,
                         margin_score: fitScore.marginScore,
                         asp_score: fitScore.aspScore
-                    }
+                    },
+                    market_size: marketSizeData.market_size,
+                    market_size_display: marketSizeData.market_size_display,
+                    market_share: marketSizeData.market_share,
+                    market_share_display: marketSizeData.market_share_display
                 });
 
                 // Count priorities
@@ -108,22 +120,212 @@ class FitScoreService {
                 total_retailers: retailers.length,
                 high_priority: highPriority,
                 medium_priority: mediumPriority,
-                low_priority: lowPriority
+                low_priority: lowPriority,
+                total_market_size: totalMarketSizeData.total_market_size,
+                total_market_size_display: totalMarketSizeData.total_market_size_display
             };
 
             console.log(`🎯 FIT Score Calculation Complete!`);
             console.log(`📊 Summary: ${summary.total_retailers} retailers analyzed`);
             console.log(`   └─ High Priority: ${summary.high_priority}, Medium: ${summary.medium_priority}, Low: ${summary.low_priority}`);
+            console.log(`   └─ Total Market Size: ${summary.total_market_size_display}`);
             console.log(`📈 Top 5 retailers by FIT score:`, retailers.slice(0, 5).map(r => `${r.retailer_name}: ${r.fit_score}%`));
 
             return {
                 retailers,
-                calculation_summary: summary
+                calculation_summary: summary,
+                market_size_data: totalMarketSizeData
             };
 
         } catch (error) {
             console.error('❌ FIT Score calculation error:', error);
             throw error;
+        }
+    }
+
+    // ========================================
+    // MARKET SIZE CALCULATION METHODS
+    // ========================================
+    
+    /**
+     * Calculate total market size for all retailers in matching categories/subcategories
+     * @param {Array} selectedCategories - Brand's selected categories with subcategories
+     * @returns {Object} - Total market size and breakdown
+     */
+    static async calculateTotalMarketSize(selectedCategories) {
+        try {
+            if (!selectedCategories || selectedCategories.length === 0) {
+                return {
+                    total_market_size: 0,
+                    total_market_size_display: "0.0Cr",
+                    category_breakdown: []
+                };
+            }
+
+            // Build category and subcategory filters
+            const categoryFilters = [];
+            const subcategoryFilters = [];
+            
+            selectedCategories.forEach(cat => {
+                categoryFilters.push(cat.category);
+                cat.sub_categories.forEach(subcat => {
+                    subcategoryFilters.push(subcat);
+                });
+            });
+
+            // Calculate total market size across all matching retailers
+            const totalResult = await db.query(`
+                SELECT 
+                    SUM(rpm.annual_sale) as total_market_size,
+                    COUNT(DISTINCT rpm.retailer_id) as retailer_count,
+                    COUNT(DISTINCT rpm.product_id) as product_count
+                FROM retailer_product_mappings rpm
+                JOIN products p ON rpm.product_id = p.id
+                WHERE p.category = ANY($1) 
+                  AND p.sub_category = ANY($2)
+                  AND rpm.annual_sale > 0
+            `, [categoryFilters, subcategoryFilters]);
+
+            const totalMarketSize = totalResult.rows[0].total_market_size || 0;
+            
+            // Get category breakdown
+            const breakdownResult = await db.query(`
+                SELECT 
+                    p.category,
+                    p.sub_category,
+                    SUM(rpm.annual_sale) as category_market_size,
+                    COUNT(DISTINCT rpm.retailer_id) as retailer_count
+                FROM retailer_product_mappings rpm
+                JOIN products p ON rpm.product_id = p.id
+                WHERE p.category = ANY($1) 
+                  AND p.sub_category = ANY($2)
+                  AND rpm.annual_sale > 0
+                GROUP BY p.category, p.sub_category
+                ORDER BY category_market_size DESC
+            `, [categoryFilters, subcategoryFilters]);
+
+            const categoryBreakdown = breakdownResult.rows.map(row => ({
+                category: row.category,
+                sub_category: row.sub_category,
+                market_size: parseInt(row.category_market_size) || 0,
+                market_size_display: this.formatMarketSize(row.category_market_size),
+                retailer_count: parseInt(row.retailer_count) || 0
+            }));
+
+            console.log(`📊 Total Market Size: ${this.formatMarketSize(totalMarketSize)} (${totalResult.rows[0].retailer_count} retailers, ${totalResult.rows[0].product_count} products)`);
+
+            return {
+                total_market_size: parseInt(totalMarketSize) || 0,
+                total_market_size_display: this.formatMarketSize(totalMarketSize),
+                category_breakdown: categoryBreakdown
+            };
+
+        } catch (error) {
+            console.error('❌ Error calculating total market size:', error);
+            return {
+                total_market_size: 0,
+                total_market_size_display: "0.0Cr",
+                category_breakdown: []
+            };
+        }
+    }
+
+    /**
+     * Calculate individual market size for a specific retailer
+     * @param {number} retailerId - Retailer ID
+     * @param {Array} selectedCategories - Brand's selected categories with subcategories
+     * @returns {Object} - Individual market size and market share
+     */
+    static async calculateIndividualMarketSize(retailerId, selectedCategories) {
+        try {
+            if (!selectedCategories || selectedCategories.length === 0) {
+                return {
+                    market_size: 0,
+                    market_size_display: "0.0Cr",
+                    market_share: 0,
+                    market_share_display: "0%"
+                };
+            }
+
+            // Build category and subcategory filters
+            const categoryFilters = [];
+            const subcategoryFilters = [];
+            
+            selectedCategories.forEach(cat => {
+                categoryFilters.push(cat.category);
+                cat.sub_categories.forEach(subcat => {
+                    subcategoryFilters.push(subcat);
+                });
+            });
+
+            // Calculate individual retailer's market size
+            const individualResult = await db.query(`
+                SELECT 
+                    SUM(rpm.annual_sale) as market_size,
+                    COUNT(DISTINCT rpm.product_id) as product_count
+                FROM retailer_product_mappings rpm
+                JOIN products p ON rpm.product_id = p.id
+                WHERE rpm.retailer_id = $1
+                  AND p.category = ANY($2) 
+                  AND p.sub_category = ANY($3)
+                  AND rpm.annual_sale > 0
+            `, [retailerId, categoryFilters, subcategoryFilters]);
+
+            const marketSize = individualResult.rows[0].market_size || 0;
+
+            // Get total market size for market share calculation
+            const totalResult = await db.query(`
+                SELECT SUM(rpm.annual_sale) as total_market_size
+                FROM retailer_product_mappings rpm
+                JOIN products p ON rpm.product_id = p.id
+                WHERE p.category = ANY($1) 
+                  AND p.sub_category = ANY($2)
+                  AND rpm.annual_sale > 0
+            `, [categoryFilters, subcategoryFilters]);
+
+            const totalMarketSize = totalResult.rows[0].total_market_size || 0;
+            const marketShare = totalMarketSize > 0 ? (marketSize / totalMarketSize) * 100 : 0;
+
+            console.log(`📊 Retailer ${retailerId} Market Size: ${this.formatMarketSize(marketSize)} (${marketShare.toFixed(1)}% market share)`);
+
+            return {
+                market_size: parseInt(marketSize) || 0,
+                market_size_display: this.formatMarketSize(marketSize),
+                market_share: parseFloat(marketShare.toFixed(2)),
+                market_share_display: `${marketShare.toFixed(1)}%`
+            };
+
+        } catch (error) {
+            console.error(`❌ Error calculating market size for retailer ${retailerId}:`, error);
+            return {
+                market_size: 0,
+                market_size_display: "0.0Cr",
+                market_share: 0,
+                market_share_display: "0%"
+            };
+        }
+    }
+
+    /**
+     * Format market size number to display format (e.g., 12500000 -> "1.25Cr")
+     * @param {number} amount - Market size amount
+     * @returns {string} - Formatted display string
+     */
+    static formatMarketSize(amount) {
+        if (!amount || amount === 0) return "0.0Cr";
+        
+        const amountNum = parseFloat(amount);
+        if (isNaN(amountNum)) return "0.0Cr";
+        
+        // Convert to Crores (divide by 1,00,00,000)
+        const crores = amountNum / 10000000;
+        
+        if (crores >= 100) {
+            return `${crores.toFixed(0)}Cr`;
+        } else if (crores >= 10) {
+            return `${crores.toFixed(1)}Cr`;
+        } else {
+            return `${crores.toFixed(2)}Cr`;
         }
     }
 

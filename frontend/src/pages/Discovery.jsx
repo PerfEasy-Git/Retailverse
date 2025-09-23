@@ -792,7 +792,7 @@ const Discovery = () => {
                 </div>
                 <div className="bg-white rounded-lg shadow p-4 text-center">
                   <div className="text-2xl font-bold text-gray-900">
-                    0.00Cr
+                    {fitScoreResults?.calculation_summary?.total_market_size_display || "0.00Cr"}
                   </div>
                   <div className="text-sm text-gray-600">TOTAL MARKET SIZE</div>
                 </div>
@@ -837,7 +837,7 @@ const Discovery = () => {
                         {/* Market Size */}
                         <div className="text-center">
                           <div className="text-sm text-gray-600 mb-2">Market Size</div>
-                          <div className="text-xl font-bold text-gray-900">0.0Cr</div>
+                          <div className="text-xl font-bold text-gray-900">{retailer.market_size_display || "0.0Cr"}</div>
                         </div>
 
                         {/* Match Score */}
