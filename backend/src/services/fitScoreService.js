@@ -340,8 +340,8 @@ class FitScoreService {
         const amountNum = parseFloat(amount);
         if (isNaN(amountNum)) return "0.0Cr";
         
-        // Convert to Crores (divide by 1,00,00,000)
-        const crores = amountNum / 10000000;
+        // Convert from Lacs to Crores (divide by 100)
+        const crores = amountNum / 100;
         
         // Handle very small values that would show as 0.00Cr
         if (crores < 0.01) {

@@ -210,8 +210,8 @@ async function getMarketData(retailerId) {
 
         let marketSize = 0;
         if (marketResult.rows.length > 0 && marketResult.rows[0].total_market_size) {
-            // Convert to crores (divide by 10,000,000)
-            marketSize = (marketResult.rows[0].total_market_size / 10000000).toFixed(1);
+            // Convert from lacs to crores (divide by 100)
+            marketSize = (marketResult.rows[0].total_market_size / 100).toFixed(1);
         }
 
         return {
