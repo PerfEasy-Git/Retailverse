@@ -35,10 +35,10 @@ const GTMStrategy = () => {
         }
     );
 
-    // Filter retailers based on preferences and sort by FIT score (descending)
+    // Filter retailers based on preferences and sort by FIT score (descending)        
     const filteredRetailers = useMemo(() => {
         if (!fitScoreResults?.retailers) return [];
-        
+
         // Map retailers and sort by FIT score in descending order
         return fitScoreResults.retailers
             .map(retailer => ({
@@ -47,7 +47,7 @@ const GTMStrategy = () => {
                 fitScore: retailer.fit_score,
                 outletCount: retailer.outlet_count || 0
             }))
-            .sort((a, b) => b.fitScore - a.fitScore); // Sort by FIT score descending
+            .sort((a, b) => b.fitScore - a.fitScore); // Sort by FIT score descending  
     }, [fitScoreResults, preferences]);
 
     const handlePreferenceChange = (type, value) => {
@@ -59,7 +59,7 @@ const GTMStrategy = () => {
 
     const handleGenerateStrategy = () => {
         if (!fitScoreResults) {
-            alert('No FIT score data available. Please calculate FIT scores first.');
+            alert('No FIT score data available. Please calculate FIT scores first.');  
             return;
         }
 
@@ -71,11 +71,11 @@ const GTMStrategy = () => {
     };
 
     const handleBackClick = () => {
-        navigate('/discovery', { 
-            state: { 
+        navigate('/discovery', {
+            state: {
                 activeTab: 'fit-scores',
-                fitScoreResults 
-            } 
+                fitScoreResults
+            }
         });
     };
 
@@ -109,11 +109,11 @@ const GTMStrategy = () => {
             </div>
 
             <div className="px-8 py-8">
-                {/* Preference Selection - Matching Existing RetailVerse Design */}
+                {/* Preference Selection - Matching Existing RetailVerse Design */}    
                 <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-6">
                     <h2 className="text-xl font-bold text-gray-900 mb-6">SELECT YOUR PREFERENCE</h2>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">       
                         {/* Payment Term */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-3">PAYMENT TERM</label>
@@ -122,7 +122,7 @@ const GTMStrategy = () => {
                                 onChange={(e) => handlePreferenceChange('paymentTerm', e.target.value)}
                                 className="input w-full"
                             >
-                                {preferenceOptions.paymentTerm.map((option) => (
+                                {preferenceOptions.paymentTerm.map((option) => (       
                                     <option key={option} value={option}>{option}</option>
                                 ))}
                             </select>
@@ -136,7 +136,7 @@ const GTMStrategy = () => {
                                 onChange={(e) => handlePreferenceChange('businessModel', e.target.value)}
                                 className="input w-full"
                             >
-                                {preferenceOptions.businessModel.map((option) => (
+                                {preferenceOptions.businessModel.map((option) => (     
                                     <option key={option} value={option}>{option}</option>
                                 ))}
                             </select>
@@ -179,19 +179,19 @@ const GTMStrategy = () => {
                             </h2>
                         </div>
 
-                        {/* Retailer Match Results - Matching Existing Design */}
+                        {/* Retailer Match Results - Matching Existing Design */}      
                         <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
                             <div className="divide-y divide-gray-200">
                                 {(gtmResults?.retailers || filteredRetailers).map((retailer, index) => (
                                     <div key={retailer.id || index} className={`flex items-center justify-between p-4 ${
-                                        index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
+                                        index % 2 === 0 ? 'bg-gray-50' : 'bg-white'    
                                     }`}>
                                         {/* Retailer Logo and Name */}
-                                        <div className="flex items-center space-x-4">
+                                        <div className="flex items-center space-x-4">  
                                             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                                                index % 4 === 0 ? 'bg-red-500' :
-                                                index % 4 === 1 ? 'bg-blue-500' :
-                                                index % 4 === 2 ? 'bg-orange-500' :
+                                                index % 4 === 0 ? 'bg-red-500' :       
+                                                index % 4 === 1 ? 'bg-blue-500' :      
+                                                index % 4 === 2 ? 'bg-orange-500' :    
                                                 'bg-purple-500'
                                             }`}>
                                                 {retailer.name.split(' ').map(word => word.charAt(0)).join('').substring(0, 2)}
@@ -203,7 +203,7 @@ const GTMStrategy = () => {
 
                                         {/* Match Score */}
                                         <div className="text-right">
-                                            <div className={`text-2xl font-bold ${
+                                            <div className={`text-2xl font-bold ${     
                                                 (retailer.matchScore || retailer.fitScore) >= 80 ? 'text-green-600' :
                                                 (retailer.matchScore || retailer.fitScore) >= 60 ? 'text-yellow-600' :
                                                 'text-red-600'
@@ -228,7 +228,7 @@ const GTMStrategy = () => {
 
                 {/* Error State */}
                 {generateStrategyMutation.isError && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">   
                         <p className="text-red-800">Failed to generate GTM strategy. Please try again.</p>
                     </div>
                 )}
