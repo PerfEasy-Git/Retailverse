@@ -88,6 +88,12 @@ class FitScoreService {
                 console.log(`   └─ Market Size: ${marketSizeData.market_size_display}, Market Share: ${marketSizeData.market_share_display}`);
                 console.log(`🔍 Debug - Market Size Data:`, JSON.stringify(marketSizeData, null, 2));
                 
+                // Skip retailers with 0% FIT score
+                if (fitScore.overallScore === 0) {
+                    console.log(`🚫 Skipping ${retailer.retailer_name} - 0% FIT Score`);
+                    continue;
+                }
+                
                 retailers.push({
                     retailer_id: retailer.id,
                     retailer_name: retailer.retailer_name,
@@ -108,7 +114,7 @@ class FitScoreService {
                     market_share_display: marketSizeData.market_share_display
                 });
 
-                // Count priorities
+                // Count priorities (only for retailers that are included in results)
                 if (fitScore.overallScore >= 80) highPriority++;
                 else if (fitScore.overallScore >= 60) mediumPriority++;
                 else lowPriority++;

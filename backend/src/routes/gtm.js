@@ -105,6 +105,12 @@ async function processRetailersForGTM(retailers, preferences, brandId) {
 
     for (const retailer of retailers) {
         try {
+            // Skip retailers with 0% FIT score
+            if (retailer.fit_score === 0) {
+                console.log(`🚫 Skipping ${retailer.retailer_name} from GTM - 0% FIT Score`);
+                continue;
+            }
+            
             // Get detailed retailer information
             const retailerResult = await db.query(`
                 SELECT 
