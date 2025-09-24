@@ -100,6 +100,8 @@ class FitScoreService {
                     retailer_category: retailer.retailer_category,
                     retailer_format: retailer.retailer_format,
                     outlet_count: retailer.outlet_count,
+                    purchase_model: retailer.purchase_model,
+                    retailer_sale_model: retailer.retailer_sale_model,
                     fit_score: fitScore.overallScore,
                     recommendation: fitScore.recommendation,
                     score_breakdown: {

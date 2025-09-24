@@ -1,7 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useQuery, useMutation } from 'react-query';
-import axios from 'axios';
 
 const GTMStrategy = () => {
     const navigate = useNavigate();
@@ -11,36 +9,43 @@ const GTMStrategy = () => {
         businessModel: 'All',
         nmtRmt: 'All'
     });
-    const [gtmResults, setGtmResults] = useState(null);
-    const [isGenerating, setIsGenerating] = useState(false);
-
     // Get FIT score results from navigation state
     const fitScoreResults = location.state?.fitScoreResults;
-
-    // Generate GTM strategy mutation
-    const generateStrategyMutation = useMutation(
-        async (strategyData) => {
-            const response = await axios.post('/api/gtm/generate-strategy', strategyData);
-            return response.data;
-        },
-        {
-            onSuccess: (data) => {
-                setGtmResults(data);
-                setIsGenerating(false);
-            },
-            onError: (error) => {
-                console.error('GTM strategy generation error:', error);
-                setIsGenerating(false);
-            }
-        }
-    );
 
     // Filter retailers based on preferences and sort by FIT score (descending)        
     const filteredRetailers = useMemo(() => {
         if (!fitScoreResults?.retailers) return [];
 
-        // Map retailers and sort by FIT score in descending order
-        return fitScoreResults.retailers
+        // Filter retailers based on preferences
+        let filtered = fitScoreResults.retailers.filter(retailer => {
+            // Filter by Payment Term
+            if (preferences.paymentTerm !== 'All' && retailer.purchase_model !== preferences.paymentTerm) {
+                return false;
+            }
+            
+            // Filter by Business Model
+            if (preferences.businessModel !== 'All' && retailer.retailer_sale_model !== preferences.businessModel) {
+                return false;
+            }
+            
+            // Filter by NMT/RMT (using retailer_category)
+            if (preferences.nmtRmt !== 'All') {
+                if (preferences.nmtRmt === 'NMT' && !retailer.retailer_category?.includes('NMT')) {
+                    return false;
+                }
+                if (preferences.nmtRmt === 'RMT' && !retailer.retailer_category?.includes('RMT')) {
+                    return false;
+                }
+                if (preferences.nmtRmt === 'HYBRID' && !retailer.retailer_category?.includes('HYBRID')) {
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+
+        // Map and sort by FIT score in descending order
+        return filtered
             .map(retailer => ({
                 id: retailer.retailer_id,
                 name: retailer.retailer_name,
@@ -57,18 +62,6 @@ const GTMStrategy = () => {
         }));
     };
 
-    const handleGenerateStrategy = () => {
-        if (!fitScoreResults) {
-            alert('No FIT score data available. Please calculate FIT scores first.');  
-            return;
-        }
-
-        setIsGenerating(true);
-        generateStrategyMutation.mutate({
-            preferences,
-            fitScoreResults
-        });
-    };
 
     const handleBackClick = () => {
         navigate('/discovery', {
@@ -157,16 +150,6 @@ const GTMStrategy = () => {
                         </div>
                     </div>
 
-                    {/* Generate Button */}
-                    <div className="flex justify-end">
-                        <button
-                            onClick={handleGenerateStrategy}
-                            disabled={isGenerating}
-                            className="btn-primary px-8 py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isGenerating ? 'GENERATING...' : 'GENERATE'}
-                        </button>
-                    </div>
                 </div>
 
                 {/* Retailer Results - Show by default, update when preferences change */}
@@ -175,14 +158,28 @@ const GTMStrategy = () => {
                         {/* Strategy Title */}
                         <div className="text-center">
                             <h2 className="text-2xl font-bold text-gray-900">
-                                {gtmResults ? 'YOUR GO TO MARKET STRATEGY' : 'RETAILER MATCH'}
+                                RETAILER MATCH
                             </h2>
                         </div>
 
+                        {/* No Matches Message */}
+                        {filteredRetailers.length === 0 && (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                                <div className="text-yellow-600">
+                                    <svg className="mx-auto h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                    <h3 className="text-lg font-semibold text-yellow-800 mb-2">No Retailers Match Selected Criteria</h3>
+                                    <p className="text-yellow-700">Please adjust your filter preferences to see matching retailers.</p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Retailer Match Results - Matching Existing Design */}      
-                        <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-                            <div className="divide-y divide-gray-200">
-                                {(gtmResults?.retailers || filteredRetailers).map((retailer, index) => (
+                        {filteredRetailers.length > 0 && (
+                            <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+                                <div className="divide-y divide-gray-200">
+                                    {filteredRetailers.map((retailer, index) => (
                                     <div key={retailer.id || index} className={`flex items-center justify-between p-4 ${
                                         index % 2 === 0 ? 'bg-gray-50' : 'bg-white'    
                                     }`}>
@@ -212,24 +209,10 @@ const GTMStrategy = () => {
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Loading State */}
-                {isGenerating && (
-                    <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-                        <p className="mt-4 text-gray-600">Generating your Go To Market Strategy...</p>
-                    </div>
-                )}
-
-                {/* Error State */}
-                {generateStrategyMutation.isError && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">   
-                        <p className="text-red-800">Failed to generate GTM strategy. Please try again.</p>
+                        )}
                     </div>
                 )}
 

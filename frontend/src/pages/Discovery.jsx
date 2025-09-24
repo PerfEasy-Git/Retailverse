@@ -730,7 +730,7 @@ const Discovery = () => {
                         ₹{parseFloat(product.asp).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {parseInt(product.quantity).toLocaleString()}
+                        {parseInt(product.quantity).toLocaleString()}{product.uom && ` (${product.uom})`}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {parseFloat(product.trade_margin).toFixed(1)}%
