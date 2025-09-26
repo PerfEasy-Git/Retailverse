@@ -36,7 +36,7 @@ const GTMStrategy = () => {
                 if (preferences.nmtRmt === 'RMT' && !retailer.retailer_category?.includes('RMT')) {
                     return false;
                 }
-                if (preferences.nmtRmt === 'HYBRID' && !retailer.retailer_category?.includes('HYBRID')) {
+                if (preferences.nmtRmt === 'STANDALONE' && !retailer.retailer_category?.includes('STANDALONE')) {
                     return false;
                 }
             }
@@ -73,9 +73,9 @@ const GTMStrategy = () => {
     };
 
     const preferenceOptions = {
-        paymentTerm: ['All', 'OUTRIGHT', 'CREDIT', 'CONSIGNMENT'],
-        businessModel: ['All', 'B2C', 'B2B', 'B2B2C'],
-        nmtRmt: ['All', 'NMT', 'RMT', 'HYBRID']
+        paymentTerm: ['All', 'OUTRIGHT', 'SOR'],
+        businessModel: ['All', 'B2B', 'B2C'],
+        nmtRmt: ['All', 'NMT', 'RMT', 'STANDALONE']
     };
 
     return (
