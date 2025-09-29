@@ -366,21 +366,87 @@ router.get('/:id/details', async (req, res) => {
             categoryPercentage = "0%";
         }
 
-        // Get category and brand share data (mock for now - will be replaced with real data)
-        const subCategoryShare = [
-            { name: "SHAVING FOAM", percentage: 38, color: "#7C3AED" },
-            { name: "RAZOR", percentage: 22, color: "#A855F7" },
-            { name: "SHAVING CREAM", percentage: 40, color: "#9333EA" }
-        ];
+        // Get real subcategory and brand share data from database
+        let subCategoryShare = [];
+        let brandShare = [];
+        
+        try {
+            // Calculate subcategory distribution
+            const subCategoryResult = await db.query(`
+                SELECT 
+                    p.sub_category as name,
+                    ROUND(
+                        (SUM(rpm.annual_sale) / 
+                         (SELECT SUM(annual_sale) 
+                          FROM retailer_product_mappings rpm2 
+                          JOIN products p2 ON rpm2.product_id = p2.id 
+                          WHERE rpm2.retailer_id = $1)
+                        ) * 100, 1
+                    ) as percentage
+                FROM retailer_product_mappings rpm
+                JOIN products p ON rpm.product_id = p.id
+                WHERE rpm.retailer_id = $1
+                GROUP BY p.sub_category
+                HAVING SUM(rpm.annual_sale) > 0
+                ORDER BY percentage DESC
+            `, [id]);
 
-        const brandShare = [
-            { name: "GILLETTE", percentage: 58.4, color: "#F97316" },
-            { name: "BOMBAY SHAVING", percentage: 8.8, color: "#FB923C" },
-            { name: "VIJOHN", percentage: 11, color: "#FBBF24" },
-            { name: "DENIM", percentage: 11, color: "#D97706" },
-            { name: "432 LASER", percentage: 6.6, color: "#F59E0B" },
-            { name: "OTHERS", percentage: 3.2, color: "#92400E" }
-        ];
+            // Add colors to subcategory data
+            const subCategoryColors = ["#7C3AED", "#A855F7", "#9333EA", "#C084FC", "#E879F9", "#F0ABFC"];
+            subCategoryShare = subCategoryResult.rows.map((row, index) => ({
+                name: row.name.toUpperCase(),
+                percentage: parseFloat(row.percentage),
+                color: subCategoryColors[index % subCategoryColors.length]
+            }));
+
+            // Calculate brand market share
+            const brandResult = await db.query(`
+                SELECT 
+                    p.brand_name as name,
+                    ROUND(
+                        (SUM(rpm.annual_sale) / 
+                         (SELECT SUM(annual_sale) 
+                          FROM retailer_product_mappings rpm2 
+                          JOIN products p2 ON rpm2.product_id = p2.id 
+                          WHERE rpm2.retailer_id = $1)
+                        ) * 100, 1
+                    ) as percentage
+                FROM retailer_product_mappings rpm
+                JOIN products p ON rpm.product_id = p.id
+                WHERE rpm.retailer_id = $1
+                GROUP BY p.brand_name
+                HAVING SUM(rpm.annual_sale) > 0
+                ORDER BY percentage DESC
+                LIMIT 6
+            `, [id]);
+
+            // Add colors to brand data
+            const brandColors = ["#F97316", "#FB923C", "#FBBF24", "#D97706", "#F59E0B", "#92400E"];
+            brandShare = brandResult.rows.map((row, index) => ({
+                name: row.name.toUpperCase(),
+                percentage: parseFloat(row.percentage),
+                color: brandColors[index % brandColors.length]
+            }));
+
+            // Handle case where no data is available
+            if (subCategoryShare.length === 0) {
+                subCategoryShare = [{ name: "NO DATA AVAILABLE", percentage: 100, color: "#E5E7EB" }];
+            }
+            
+            if (brandShare.length === 0) {
+                brandShare = [{ name: "NO DATA AVAILABLE", percentage: 100, color: "#E5E7EB" }];
+            }
+
+        } catch (error) {
+            console.error('Error calculating pie chart data:', error);
+            // Fallback to placeholder data if calculation fails
+            subCategoryShare = [
+                { name: "DATA UNAVAILABLE", percentage: 100, color: "#E5E7EB" }
+            ];
+            brandShare = [
+                { name: "DATA UNAVAILABLE", percentage: 100, color: "#E5E7EB" }
+            ];
+        }
 
         // Parse store images if available
         let inStoreImages = [];

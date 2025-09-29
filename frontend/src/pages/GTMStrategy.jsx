@@ -18,9 +18,22 @@ const GTMStrategy = () => {
 
         // Filter retailers based on preferences
         let filtered = fitScoreResults.retailers.filter(retailer => {
-            // Filter by Payment Term
-            if (preferences.paymentTerm !== 'All' && retailer.purchase_model !== preferences.paymentTerm) {
-                return false;
+            // Filter by Payment Term - Handle both "Outright" and "SOR( Sales or Return)" with case-insensitive matching
+            if (preferences.paymentTerm !== 'All') {
+                const selectedTerm = preferences.paymentTerm;
+                const retailerTerm = retailer.purchase_model;
+                
+                if (selectedTerm === 'OUTRIGHT') {
+                    // Match "Outright" (case-insensitive)
+                    if (!retailerTerm || !retailerTerm.toLowerCase().includes('outright')) {
+                        return false;
+                    }
+                } else if (selectedTerm === 'SOR') {
+                    // Match "SOR" - check if it contains "SOR" (handles "SOR( Sales or Return)")
+                    if (!retailerTerm || !retailerTerm.toUpperCase().includes('SOR')) {
+                        return false;
+                    }
+                }
             }
             
             // Filter by Business Model
