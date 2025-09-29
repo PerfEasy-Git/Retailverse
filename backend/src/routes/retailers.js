@@ -376,8 +376,8 @@ router.get('/:id/details', async (req, res) => {
                 SELECT 
                     p.sub_category as name,
                     ROUND(
-                        (SUM(rpm.annual_sale) / 
-                         (SELECT SUM(annual_sale) 
+                        (SUM(rpm.annual_sale)::DECIMAL / 
+                         (SELECT SUM(annual_sale)::DECIMAL 
                           FROM retailer_product_mappings rpm2 
                           JOIN products p2 ON rpm2.product_id = p2.id 
                           WHERE rpm2.retailer_id = $1)
@@ -404,8 +404,8 @@ router.get('/:id/details', async (req, res) => {
                 SELECT 
                     p.brand_name as name,
                     ROUND(
-                        (SUM(rpm.annual_sale) / 
-                         (SELECT SUM(annual_sale) 
+                        (SUM(rpm.annual_sale)::DECIMAL / 
+                         (SELECT SUM(annual_sale)::DECIMAL 
                           FROM retailer_product_mappings rpm2 
                           JOIN products p2 ON rpm2.product_id = p2.id 
                           WHERE rpm2.retailer_id = $1)
