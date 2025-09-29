@@ -70,6 +70,8 @@ const RetailerDetails = () => {
 
   // Professional pie chart component
   const PieChart = ({ data, title }) => {
+    const [tooltip, setTooltip] = useState({ visible: false, content: '', x: 0, y: 0 });
+    const [hoveredSegment, setHoveredSegment] = useState(null);
     let cumulativePercentage = 0;
     
     return (
@@ -93,7 +95,22 @@ const RetailerDetails = () => {
                     fill={item.color}
                     stroke="white"
                     strokeWidth="2"
-                    className="hover:opacity-80 transition-opacity duration-200"
+                    className={`cursor-pointer transition-all duration-200 ${
+                      hoveredSegment === item.name ? 'opacity-100 scale-105' : 'opacity-80 hover:opacity-100'
+                    }`}
+                    onMouseEnter={(e) => {
+                      setHoveredSegment(item.name);
+                      setTooltip({
+                        visible: true,
+                        content: `${item.name}: ${item.percentage}%`,
+                        x: e.clientX,
+                        y: e.clientY
+                      });
+                    }}
+                    onMouseLeave={() => {
+                      setHoveredSegment(null);
+                      setTooltip({ visible: false, content: '', x: 0, y: 0 });
+                    }}
                   />
                 );
               }
@@ -123,25 +140,74 @@ const RetailerDetails = () => {
                   fill={item.color}
                   stroke="white"
                   strokeWidth="2"
-                  className="hover:opacity-80 transition-opacity duration-200"
+                  className={`cursor-pointer transition-all duration-200 ${
+                    hoveredSegment === item.name ? 'opacity-100 scale-105' : 'opacity-80 hover:opacity-100'
+                  }`}
+                  onMouseEnter={(e) => {
+                    setHoveredSegment(item.name);
+                    setTooltip({
+                      visible: true,
+                      content: `${item.name}: ${item.percentage}%`,
+                      x: e.clientX,
+                      y: e.clientY
+                    });
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredSegment(null);
+                    setTooltip({ visible: false, content: '', x: 0, y: 0 });
+                  }}
                 />
               );
             })}
           </svg>
+          
+          {/* Tooltip */}
+          {tooltip.visible && (
+            <div
+              className="absolute z-10 bg-gray-900 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium pointer-events-none"
+              style={{
+                left: tooltip.x - 50,
+                top: tooltip.y - 40,
+                transform: 'translateX(-50%)'
+              }}
+            >
+              {tooltip.content}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+            </div>
+          )}
         </div>
         
         <div className="space-y-4">
           {data.map((item, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div 
+              key={index} 
+              className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                hoveredSegment === item.name 
+                  ? 'bg-blue-50 border-2 border-blue-200 shadow-md' 
+                  : 'bg-gray-50 hover:bg-gray-100'
+              }`}
+              onMouseEnter={() => setHoveredSegment(item.name)}
+              onMouseLeave={() => setHoveredSegment(null)}
+            >
               <div className="flex items-center">
                 <div 
-                  className="w-4 h-4 rounded-full mr-4 shadow-sm" 
+                  className={`w-4 h-4 rounded-full mr-4 shadow-sm transition-all duration-200 ${
+                    hoveredSegment === item.name ? 'scale-110' : ''
+                  }`}
                   style={{ backgroundColor: item.color }}
                 ></div>
-                <span className="text-gray-700 font-medium">{item.name}</span>
+                <span className={`font-medium transition-all duration-200 ${
+                  hoveredSegment === item.name ? 'text-blue-700 font-semibold' : 'text-gray-700'
+                }`}>
+                  {item.name}
+                </span>
               </div>
               <div className="text-right">
-                <span className="font-bold text-gray-900 text-lg">{item.percentage}%</span>
+                <span className={`font-bold text-lg transition-all duration-200 ${
+                  hoveredSegment === item.name ? 'text-blue-700' : 'text-gray-900'
+                }`}>
+                  {item.percentage}%
+                </span>
               </div>
             </div>
           ))}
