@@ -82,6 +82,22 @@ const RetailerDetails = () => {
         <div className="relative w-64 h-64 mx-auto mb-8">
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
             {data.map((item, index) => {
+              // Handle single item with 100% - draw a full circle
+              if (data.length === 1 && item.percentage === 100) {
+                return (
+                  <circle
+                    key={index}
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill={item.color}
+                    stroke="white"
+                    strokeWidth="2"
+                    className="hover:opacity-80 transition-opacity duration-200"
+                  />
+                );
+              }
+              
               const startAngle = cumulativePercentage * 3.6; // Convert percentage to degrees
               const endAngle = (cumulativePercentage + item.percentage) * 3.6;
               const largeArcFlag = item.percentage > 50 ? 1 : 0;
