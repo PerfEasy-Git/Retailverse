@@ -797,7 +797,7 @@ const Discovery = () => {
                 </div>
                 <div className="bg-white rounded-lg shadow p-4 text-center">
                   <div className="text-2xl font-bold text-gray-900">
-                    1
+                    {fitScoreResults?.calculation_summary?.state_presence || 0}
                     </div>
                   <div className="text-sm text-gray-600">STATE PRESENCE</div>
                     </div>

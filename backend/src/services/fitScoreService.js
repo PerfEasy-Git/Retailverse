@@ -125,19 +125,37 @@ class FitScoreService {
             // Sort retailers by FIT score in descending order (highest scores first)
             retailers.sort((a, b) => b.fit_score - a.fit_score);
 
+            // Calculate state presence for matched retailers
+            let statePresence = 0;
+            if (retailers.length > 0) {
+                const retailerIds = retailers.map(r => r.retailer_id);
+                const statePresenceResult = await db.query(`
+                    SELECT COUNT(DISTINCT state) as state_count
+                    FROM retailer_locations
+                    WHERE retailer_id = ANY($1)
+                      AND state IS NOT NULL 
+                      AND state != ''
+                `, [retailerIds]);
+                
+                statePresence = parseInt(statePresenceResult.rows[0].state_count) || 0;
+                console.log(`📍 State Presence calculated: ${statePresence} unique states`);
+            }
+
             const summary = {
                 total_retailers: retailers.length,
                 high_priority: highPriority,
                 medium_priority: mediumPriority,
                 low_priority: lowPriority,
                 total_market_size: totalMarketSizeData.total_market_size,
-                total_market_size_display: totalMarketSizeData.total_market_size_display
+                total_market_size_display: totalMarketSizeData.total_market_size_display,
+                state_presence: statePresence
             };
 
             console.log(`🎯 FIT Score Calculation Complete!`);
             console.log(`📊 Summary: ${summary.total_retailers} retailers analyzed`);
             console.log(`   └─ High Priority: ${summary.high_priority}, Medium: ${summary.medium_priority}, Low: ${summary.low_priority}`);
             console.log(`   └─ Total Market Size: ${summary.total_market_size_display}`);
+            console.log(`   └─ State Presence: ${summary.state_presence} states`);
             console.log(`📈 Top 5 retailers by FIT score:`, retailers.slice(0, 5).map(r => `${r.retailer_name}: ${r.fit_score}%`));
 
             return {
