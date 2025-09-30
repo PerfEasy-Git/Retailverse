@@ -38,6 +38,7 @@ const BrandProfile = () => {
       return response.data.data;
     },
     {
+      enabled: !!user,
       retry: 2,
       staleTime: 5 * 60 * 1000, // Cache for 5 minutes
       cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes

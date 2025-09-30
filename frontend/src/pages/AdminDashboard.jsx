@@ -1,4 +1,5 @@
 import { useQuery } from 'react-query'
+import { useAuth } from '../contexts/AuthContext'
 import api from '../services/api'
 import { 
   Users, 
@@ -12,10 +13,13 @@ import {
 } from 'lucide-react'
 
 const AdminDashboard = () => {
+  const { user } = useAuth()
+  
   const { data: adminData, isLoading } = useQuery(
     ['admin-dashboard'],
     () => api.get('/admin/stats').then(res => res.data),
     {
+      enabled: !!user,
       refetchInterval: 60000 // 1 minute
     }
   )
@@ -24,6 +28,7 @@ const AdminDashboard = () => {
     ['admin-analytics'],
     () => api.get('/admin/analytics').then(res => res.data),
     {
+      enabled: !!user,
       refetchInterval: 300000 // 5 minutes
     }
   )
