@@ -1,6 +1,6 @@
 {
   "name": "retailverse",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "RetailVerse Platform - Enterprise-grade Matchmaking Platform for Brands and Retailers",
   "main": "index.js",
   "scripts": {
